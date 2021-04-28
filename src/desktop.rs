@@ -21,7 +21,7 @@ impl Stuff
             version: (2, 0),
             profile: raw_gl_context::Profile::Compatibility,
             stencil_bits: 0,
-            samples: Some(4),
+            samples: None,
             srgb: true,
             double_buffer: true,
             vsync: true,
