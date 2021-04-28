@@ -65,7 +65,7 @@ pub fn start<T: App>()
                 app.frame(dt, &Gl);
                 t += 0.5 * dt;
 
-                gl.enable(glow::FRAMEBUFFER_SRGB);
+                //gl.enable(glow::FRAMEBUFFER_SRGB);
                 gl.clear_color(1.0, t % 1.0, 0.0, 1.0);
                 gl.clear(glow::COLOR_BUFFER_BIT);
 

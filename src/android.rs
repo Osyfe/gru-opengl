@@ -37,6 +37,7 @@ impl Stuff
             egl::BLUE_SIZE, 8,
             egl::ALPHA_SIZE, 8,
             egl::STENCIL_SIZE, 0,
+            egl::CONTEXT_OPENGL_FORWARD_COMPATIBLE, egl::TRUE,
             egl::NONE
         ];
         let config = instance.choose_first_config(display, &attributes).unwrap().unwrap();
@@ -44,6 +45,7 @@ impl Stuff
         [
             egl::CONTEXT_MAJOR_VERSION, 2,
             egl::CONTEXT_MINOR_VERSION, 0,
+            egl::CONTEXT_OPENGL_PROFILE_MASK, egl::CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT,
             egl::NONE
         ];
         let context = instance.create_context(display, config, None, &context_attributes).unwrap();
@@ -72,7 +74,8 @@ impl Stuff
             };
             let surface_attributes =
             [
-                khronos_egl::NONE
+                egl::GL_COLORSPACE, egl::GL_COLORSPACE_SRGB,
+                egl::NONE
             ];
             self.surface = Some(unsafe { self.instance.create_window_surface(self.display, self.config, handle.a_native_window, Some(&surface_attributes)) }.unwrap());
             self.instance.make_current(self.display, self.surface, self.surface, Some(self.context)).unwrap();
