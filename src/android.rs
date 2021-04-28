@@ -35,6 +35,8 @@ impl Stuff
             egl::RED_SIZE, 8,
             egl::GREEN_SIZE, 8,
             egl::BLUE_SIZE, 8,
+            egl::ALPHA_SIZE, 8,
+            egl::STENCIL_SIZE, 0,
             egl::NONE
         ];
         let config = instance.choose_first_config(display, &attributes).unwrap().unwrap();

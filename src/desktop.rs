@@ -19,8 +19,9 @@ impl Stuff
         let config = GlConfig
         {
             version: (2, 0),
-            profile: raw_gl_context::Profile::Core,
-            samples: Some(4),
+            profile: raw_gl_context::Profile::Compatibility,
+            stencil_bits: 0,
+            samples: None,
             srgb: true,
             double_buffer: true,
             vsync: true,
