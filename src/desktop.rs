@@ -13,7 +13,7 @@ pub struct Stuff
 
 impl Stuff
 {
-    pub fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str)
+    pub fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
     {
         let window = WindowBuilder::new().build(&event_loop).unwrap();
         let config = GlConfig
@@ -30,7 +30,7 @@ impl Stuff
         let context = GlContext::create(&window, config).unwrap();
         context.make_current();
         let gl = unsafe { glow::Context::from_loader_function(|symbol| context.get_proc_address(symbol) as *const _) };
-        (window, Self { context }, gl, "#version 110")
+        (window, Self { context }, gl, "#version 110", "#version 110")
     }
 
     pub fn resumed(&mut self, _window: &Window) {}

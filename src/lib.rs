@@ -4,7 +4,6 @@ use winit::
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder}
 };
-use glow::HasContext;
 
 #[cfg(not(any(target_arch = "wasm32", target_os = "android")))]
 mod desktop;
@@ -21,13 +20,21 @@ mod android;
 #[cfg(target_os = "android")]
 use android::*;
 
+mod gl;
+pub use gl::*;
+
 pub fn start<T: App>()
 {
     let event_loop = EventLoop::new();
-    let (window, mut stuff, gl, _glsl_header) = Stuff::new(&event_loop);
-    let mut app = T::init(&Gl);
+    let (window, mut stuff, gl, glsl_vertex_header, glsl_fragment_header) = Stuff::new(&event_loop);
+    let mut gl = Gl::new(gl, glsl_vertex_header, glsl_fragment_header);
     
-    let mut t = 0.0;
+    #[cfg(not(target_os = "android"))]
+    let mut app = T::init(gl.init());
+
+    #[cfg(target_os = "android")]
+    let mut app = None;
+
     let mut then = instant();
     event_loop.run(move |event, _, control_flow|
     {
@@ -48,30 +55,32 @@ pub fn start<T: App>()
             RawEvent::Resumed =>
             {
                 stuff.resumed(&window);
+
+                #[cfg(target_os = "android")]
+                if app.is_none() { app = Some(T::init(gl.init())); }
+                
                 then = instant();
             },
             RawEvent::Suspended =>
             {
                 stuff.suspended();
             },
-            RawEvent::MainEventsCleared => unsafe
+            RawEvent::MainEventsCleared => if stuff.active()
             {
-                if !stuff.active() { return; }
+                #[cfg(target_os = "android")]
+                let app = app.as_mut().unwrap();
 
                 let now = instant();
                 let dt = secs(now - then);
                 then = now;
 
-                app.frame(dt, &Gl);
-                t += 0.5 * dt;
-
-                //gl.enable(glow::FRAMEBUFFER_SRGB);
-                gl.clear_color(1.0, t % 1.0, 0.0, 1.0);
-                gl.clear(glow::COLOR_BUFFER_BIT);
+                let dims = window.inner_size().into();
+                gl.viewport(dims);
+                app.frame(dt, &mut gl, dims.0 as f32 / dims.1 as f32);
 
                 stuff.swap_buffers();
             },
-            RawEvent::LoopDestroyed => { }
+            RawEvent::LoopDestroyed => {},
             _ => ()
         }
     });
@@ -83,11 +92,9 @@ pub enum Event
     Bla
 }
 
-pub struct Gl;
-
 pub trait App: 'static
 {
-    fn init(gl: &Gl) -> Self;
+    fn init(gl: &mut Gl) -> Self;
     fn input(&mut self, event: Event);
-    fn frame(&mut self, dt: f32, gl: &Gl);
+    fn frame(&mut self, dt: f32, gl: &mut Gl, aspect: f32);
 }

@@ -12,7 +12,7 @@ pub struct Stuff;
 
 impl Stuff
 {
-    pub fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str)
+    pub fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
     {
         use winit::platform::web::WindowBuilderExtWebSys;
         use wasm_bindgen::JsCast;
@@ -20,7 +20,7 @@ impl Stuff
         let context: web_sys::WebGlRenderingContext = canvas.get_context("webgl").unwrap().unwrap().dyn_into().unwrap();
         let gl = glow::Context::from_webgl1_context(context);
         let window = WindowBuilder::new().with_canvas(Some(canvas)).build(&event_loop).unwrap();
-        (window, Self, gl, "#version 100 es")
+        (window, Self, gl, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
     }
 
     pub fn resumed(&mut self, _window: &Window) {}

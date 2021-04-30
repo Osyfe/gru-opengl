@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 glow = "0.9.0"
+gru-math = { path = "../gru-misc/gru-math" }
 
 # desktop
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]

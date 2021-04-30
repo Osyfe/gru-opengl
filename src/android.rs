@@ -19,7 +19,7 @@ pub struct Stuff
 
 impl Stuff
 {
-    pub fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str)
+    pub fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
     {
         //window
         let window = WindowBuilder::new().build(&event_loop).unwrap();
@@ -37,7 +37,6 @@ impl Stuff
             egl::BLUE_SIZE, 8,
             egl::ALPHA_SIZE, 8,
             egl::STENCIL_SIZE, 0,
-            egl::CONTEXT_OPENGL_FORWARD_COMPATIBLE, egl::TRUE,
             egl::NONE
         ];
         let config = instance.choose_first_config(display, &attributes).unwrap().unwrap();
@@ -45,7 +44,6 @@ impl Stuff
         [
             egl::CONTEXT_MAJOR_VERSION, 2,
             egl::CONTEXT_MINOR_VERSION, 0,
-            egl::CONTEXT_OPENGL_PROFILE_MASK, egl::CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT,
             egl::NONE
         ];
         let context = instance.create_context(display, config, None, &context_attributes).unwrap();
@@ -59,7 +57,7 @@ impl Stuff
             }
         }) };
 
-        (window, Self { instance, display, config, context, surface: None }, gl, "#version 100 es")
+        (window, Self { instance, display, config, context, surface: None }, gl, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
     }
 
     pub fn resumed(&mut self, window: &Window)
@@ -74,7 +72,7 @@ impl Stuff
             };
             let surface_attributes =
             [
-                egl::GL_COLORSPACE, egl::GL_COLORSPACE_SRGB,
+                //egl::GL_COLORSPACE, egl::GL_COLORSPACE_SRGB,
                 egl::NONE
             ];
             self.surface = Some(unsafe { self.instance.create_window_surface(self.display, self.config, handle.a_native_window, Some(&surface_attributes)) }.unwrap());

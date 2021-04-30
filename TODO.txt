@@ -1,0 +1,12 @@
+wasm alloc?
+gl abstraction:
+	shader -> pipeline?
+	buffer
+	uniforms
+	textures
+	framebuffer
+input wrapping
+file io
+sound
+networking
+threads
