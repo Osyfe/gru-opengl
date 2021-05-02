@@ -7,12 +7,17 @@ use std::collections::HashMap;
 
 mod drops;
 mod buffer;
+mod texture;
 mod render;
+mod framebuffer;
 pub use buffer::*;
+pub use texture::*;
 pub use render::*;
+pub use framebuffer::*;
 
 pub struct Gl
 {
+	pub(crate) window_dims: (u32, u32),
 	raw: Rc<Context>,
 	glsl_vertex_header: &'static str,
 	glsl_fragment_header: &'static str,
@@ -28,10 +33,11 @@ impl Gl
 	{
 		Self
 		{
+			window_dims: (0, 0),
 			raw: Rc::new(gl),
 			glsl_vertex_header,
 			glsl_fragment_header,
-			viewport: (0, 0),
+			viewport: (-1, -1),
 			clear_color: (0.0, 0.0, 0.0),
 			attributes: HashMap::new(),
 			pipeline: PipelineInfo
@@ -51,24 +57,18 @@ impl Gl
 			#[cfg(not(any(target_arch = "wasm32", target_os = "android")))]
 			gl.disable(glow::FRAMEBUFFER_SRGB);
 			gl.clear_color(0.0, 0.0, 0.0, 1.0);
+
 			gl.enable(glow::DEPTH_TEST);
+			gl.depth_func(glow::LEQUAL);
 			gl.disable(glow::BLEND);
 			gl.blend_equation(glow::FUNC_ADD);
 			gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
 			gl.enable(glow::CULL_FACE);
 			gl.cull_face(glow::BACK);
+
+			gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
 		}
 		self
-	}
-
-	pub(crate) fn viewport(&mut self, (width, height): (u32, u32))
-	{
-		let (width, height) = (width as i32, height as i32);
-		if self.viewport != (width, height)
-		{
-			unsafe { self.raw.viewport(0, 0, width, height); }
-			self.viewport = (width, height);
-		}
 	}
 
 	fn attribute_location(attributes: &mut HashMap<String, u32>, name: &str, action: &mut dyn FnMut(&str, u32))
@@ -92,7 +92,8 @@ pub struct VertexBuffer<T: AttributesReprCpacked>
 	gl: Rc<Context>,
 	buffer: <Context as HasContext>::Buffer,
 	_phantom: PhantomData<T>,
-	length: u32
+	length: u32,
+	attributes: Vec<(BufferType, u32, i32)>
 }
 //u16
 pub struct IndexBuffer
@@ -102,9 +103,25 @@ pub struct IndexBuffer
 	length: u32
 }
 
+pub struct Texture
+{
+	gl: Rc<Context>,
+	texture: <Context as HasContext>::Texture,
+	size: u32
+}
+
 pub struct Shader
 {
 	gl: Rc<Context>,
 	program: <Context as HasContext>::Program,
 	uniforms: HashMap<String, <Context as HasContext>::UniformLocation>
+}
+
+pub struct Framebuffer
+{
+	gl: Rc<Context>,
+	framebuffer: <Context as HasContext>::Framebuffer,
+	color: Texture,
+	depth: Option<<Context as HasContext>::Renderbuffer>,
+	size: u32
 }

@@ -47,6 +47,7 @@ impl Stuff
             egl::NONE
         ];
         let context = instance.create_context(display, config, None, &context_attributes).unwrap();
+        log("e");
         //gl
         let gl = unsafe { glow::Context::from_loader_function(|symbol|
         {
@@ -56,7 +57,7 @@ impl Stuff
                 None => std::ptr::null()
             }
         }) };
-
+        log("f");
         (window, Self { instance, display, config, context, surface: None }, gl, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
     }
 

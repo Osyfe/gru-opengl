@@ -1,13 +1,5 @@
 use super::*;
 
-impl Drop for Shader
-{
-	fn drop(&mut self)
-	{
-		unsafe { self.gl.delete_program(self.program) };
-	}
-}
-
 impl<T: AttributesReprCpacked> Drop for VertexBuffer<T>
 {
 	fn drop(&mut self)
@@ -21,5 +13,33 @@ impl Drop for IndexBuffer
 	fn drop(&mut self)
 	{
 		unsafe { self.gl.delete_buffer(self.buffer); }
+	}
+}
+
+impl Drop for Texture
+{
+	fn drop(&mut self)
+	{
+		unsafe { self.gl.delete_texture(self.texture); }
+	}
+}
+
+impl Drop for Shader
+{
+	fn drop(&mut self)
+	{
+		unsafe { self.gl.delete_program(self.program) };
+	}
+}
+
+impl Drop for Framebuffer
+{
+	fn drop(&mut self)
+	{
+		unsafe
+		{
+			if let Some(renderbuffer) = self.depth { self.gl.delete_renderbuffer(renderbuffer); }
+			self.gl.delete_framebuffer(self.framebuffer);
+		}
 	}
 }

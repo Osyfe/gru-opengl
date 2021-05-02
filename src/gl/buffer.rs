@@ -1,5 +1,49 @@
 use super::*;
 
+impl Gl
+{
+	pub fn new_vertex_buffer<T: AttributesReprCpacked>(&mut self, length: u32, access: BufferAccess) -> VertexBuffer<T>
+	{
+		let gl = &self.raw;
+		let buffer = unsafe
+		{
+			let buffer = gl.create_buffer().unwrap();
+			gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
+			gl.buffer_data_size(glow::ARRAY_BUFFER, length as i32 * std::mem::size_of::<T>() as i32, access.draw());
+			gl.bind_buffer(glow::ARRAY_BUFFER, None);
+			buffer
+		};
+		let mut attributes = Vec::with_capacity(T::ATTRIBUTES.len());
+		let mut size_of_t = 0;
+		for (ty, name) in T::ATTRIBUTES
+		{
+			let mut location = 0;
+			Self::attribute_location(&mut self.attributes, name, &mut |_, loc| location = loc);
+			attributes.push((*ty, location, size_of_t as i32));
+			size_of_t += (match ty
+			{
+				BufferType::Float { size } => *size,
+				BufferType::Int { size, .. } => *size
+			}) as usize * 4;
+		}
+		if size_of_t != std::mem::size_of::<T>() { panic!("Gl::new_vertex_buffer: Wrong attribute trait implementation."); }
+		VertexBuffer { gl: gl.clone(), buffer, _phantom: PhantomData, length, attributes }
+	}
+
+	pub fn new_index_buffer(&mut self, length: u32, access: BufferAccess) -> IndexBuffer
+	{
+		let gl = &self.raw;
+		unsafe
+		{
+			let buffer = gl.create_buffer().unwrap();
+			gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(buffer));
+			gl.buffer_data_size(glow::ELEMENT_ARRAY_BUFFER, length as i32 * 2, access.draw());
+			gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
+			IndexBuffer { gl: gl.clone(), buffer, length }
+		}
+	}
+}
+
 #[derive(Clone, Copy)]
 pub enum BufferType
 {
@@ -65,55 +109,6 @@ impl IndexBuffer
 			gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.buffer));
 			gl.buffer_sub_data_u8_slice(glow::ELEMENT_ARRAY_BUFFER, offset as i32 * 2, data);
 			gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
-		}
-	}
-}
-
-impl Gl
-{
-	pub fn new_vertex_buffer<T: AttributesReprCpacked>(&mut self, length: u32, access: BufferAccess) -> VertexBuffer<T>
-	{
-		let gl = &self.raw;
-		unsafe
-		{
-			let buffer = gl.create_buffer().unwrap();
-			gl.bind_buffer(glow::ARRAY_BUFFER, Some(buffer));
-			gl.buffer_data_size(glow::ARRAY_BUFFER, length as i32 * std::mem::size_of::<T>() as i32, access.draw());
-			let mut size_of_t = 0;
-			for (ty, name) in T::ATTRIBUTES
-			{
-				let mut location = 0;
-				Self::attribute_location(&mut self.attributes, name, &mut |_, loc| location = loc);
-				match ty
-				{
-					BufferType::Float { size } =>
-					{
-						gl.vertex_attrib_pointer_f32(location, *size as i32, glow::FLOAT, false, std::mem::size_of::<T>() as i32, size_of_t as i32);
-						size_of_t += *size as usize * 4;
-					}
-					BufferType::Int { signed, size } =>
-					{
-						gl.vertex_attrib_pointer_i32(location, *size as i32, if *signed { glow::INT } else { glow::UNSIGNED_INT }, std::mem::size_of::<T>() as i32, size_of_t as i32);
-						size_of_t += *size as usize * 4;
-					}
-				}
-			}
-			gl.bind_buffer(glow::ARRAY_BUFFER, None);
-			if size_of_t != std::mem::size_of::<T>() { panic!("Gl::new_vertex_buffer: Wrong attribute trait implementation."); }
-			VertexBuffer { gl: gl.clone(), buffer, _phantom: PhantomData, length }
-		}
-	}
-
-	pub fn new_index_buffer(&mut self, length: u32, access: BufferAccess) -> IndexBuffer
-	{
-		let gl = &self.raw;
-		unsafe
-		{
-			let buffer = gl.create_buffer().unwrap();
-			gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(buffer));
-			gl.buffer_data_size(glow::ELEMENT_ARRAY_BUFFER, length as i32 * 2, access.draw());
-			gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
-			IndexBuffer { gl: gl.clone(), buffer, length }
 		}
 	}
 }

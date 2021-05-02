@@ -1,6 +1,7 @@
 use winit::
 {
-    event::{Event as RawEvent, WindowEvent},
+    dpi::PhysicalSize,
+    event::{Event as RawEvent, WindowEvent, KeyboardInput, MouseScrollDelta, Touch},
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder}
 };
@@ -20,6 +21,8 @@ mod android;
 #[cfg(target_os = "android")]
 use android::*;
 
+pub mod event;
+use event::*;
 mod gl;
 pub use gl::*;
 
@@ -30,27 +33,51 @@ pub fn start<T: App>()
     let mut gl = Gl::new(gl, glsl_vertex_header, glsl_fragment_header);
     
     #[cfg(not(target_os = "android"))]
-    let mut app = T::init(gl.init());
+    let mut app = Some(T::init(gl.init()));
 
     #[cfg(target_os = "android")]
-    let mut app = None;
+    let mut app: Option<T> = None;
 
+    let mut dims = window.inner_size().into();
     let mut then = instant();
+
     event_loop.run(move |event, _, control_flow|
     {
         match event
         {
+            RawEvent::WindowEvent { event: WindowEvent::Resized(PhysicalSize { width, height }), .. } =>
+            {
+                dims = (width, height)
+            }
             RawEvent::WindowEvent { event: WindowEvent::CloseRequested, .. } =>
             {
                 *control_flow = ControlFlow::Exit
             },
-            RawEvent::WindowEvent { event: WindowEvent::MouseInput { .. }, .. } =>
+            RawEvent::WindowEvent { event: WindowEvent::KeyboardInput { input: KeyboardInput { state, virtual_keycode: Some(key), .. }, .. }, .. } =>
             {
-                *control_flow = ControlFlow::Exit
+                app.as_mut().unwrap().input(Event::Key { key, state });
             },
-            RawEvent::WindowEvent { event: WindowEvent::Touch(_), .. } =>
+            RawEvent::WindowEvent { event: WindowEvent::MouseInput { button, state, .. }, .. } =>
             {
-                *control_flow = ControlFlow::Exit
+                app.as_mut().unwrap().input(Event::Click { button, state });
+            },
+            RawEvent::WindowEvent { event: WindowEvent::CursorMoved { position, .. }, .. } =>
+            {
+                let position: (f32, f32) = position.into();
+                app.as_mut().unwrap().input(Event::Cursor { position: (position.0, dims.1 as f32 - position.1) });
+            },
+            RawEvent::WindowEvent { event: WindowEvent::MouseWheel { delta, .. }, .. } =>
+            {
+                app.as_mut().unwrap().input(Event::Scroll(match delta
+                {
+                    MouseScrollDelta::LineDelta(x, y) => Scroll::Wheel(x, y),
+                    MouseScrollDelta::PixelDelta(p) => Scroll::Touch(p.x as f32, p.y as f32)
+                }));
+            },
+            RawEvent::WindowEvent { event: WindowEvent::Touch(Touch { phase, location, id, .. }), .. } =>
+            {
+                let position: (f32, f32) = location.into();
+                app.as_mut().unwrap().input(Event::Touch { position: (position.0, dims.1 as f32 - position.1), phase, finger: id });
             },
             RawEvent::Resumed =>
             {
@@ -67,16 +94,17 @@ pub fn start<T: App>()
             },
             RawEvent::MainEventsCleared => if stuff.active()
             {
-                #[cfg(target_os = "android")]
                 let app = app.as_mut().unwrap();
 
                 let now = instant();
                 let dt = secs(now - then);
                 then = now;
 
-                let dims = window.inner_size().into();
-                gl.viewport(dims);
-                app.frame(dt, &mut gl, dims.0 as f32 / dims.1 as f32);
+                gl.window_dims = dims;
+                if !app.frame(dt, &mut gl, dims)
+                {
+                    *control_flow = ControlFlow::Exit;
+                }
 
                 stuff.swap_buffers();
             },
@@ -86,15 +114,9 @@ pub fn start<T: App>()
     });
 }
 
-#[derive(Clone, Copy)]
-pub enum Event
-{
-    Bla
-}
-
 pub trait App: 'static
 {
     fn init(gl: &mut Gl) -> Self;
     fn input(&mut self, event: Event);
-    fn frame(&mut self, dt: f32, gl: &mut Gl, aspect: f32);
+    fn frame(&mut self, dt: f32, gl: &mut Gl, window_dims: (u32, u32)) -> bool;
 }
