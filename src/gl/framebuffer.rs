@@ -13,7 +13,7 @@ impl Gl
 
 			let color = gl.create_texture().unwrap();
 			gl.bind_texture(glow::TEXTURE_2D, Some(color));
-			gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGBA as i32, *size as i32, *size as i32, 0, glow::RGBA, glow::UNSIGNED_BYTE, None);
+			gl.tex_image_2d(glow::TEXTURE_2D, 0, glow::RGB as i32, *size as i32, *size as i32, 0, glow::RGB, glow::UNSIGNED_BYTE, None);
 			gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, wrap.wrap() as i32);
 			gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, wrap.wrap() as i32);
 			gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::LINEAR as i32);
@@ -36,14 +36,6 @@ impl Gl
 			Framebuffer { gl: gl.clone(), framebuffer, color, depth, size: *size }
 		}
 	}
-}
-
-#[derive(Clone, Copy, PartialEq)]
-pub enum FramebufferAttachment
-{
-	Color,
-	Depth,
-	ColorDepth
 }
 
 #[derive(Clone)]

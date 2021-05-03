@@ -8,10 +8,12 @@ use std::collections::HashMap;
 mod drops;
 mod buffer;
 mod texture;
+mod shader;
 mod render;
 mod framebuffer;
 pub use buffer::*;
 pub use texture::*;
+pub use shader::*;
 pub use render::*;
 pub use framebuffer::*;
 
@@ -114,7 +116,7 @@ pub struct Shader
 {
 	gl: Rc<Context>,
 	program: <Context as HasContext>::Program,
-	uniforms: HashMap<String, <Context as HasContext>::UniformLocation>
+	uniforms: HashMap<String, UniformKey>
 }
 
 pub struct Framebuffer
@@ -125,3 +127,6 @@ pub struct Framebuffer
 	depth: Option<<Context as HasContext>::Renderbuffer>,
 	size: u32
 }
+
+#[derive(Clone)]
+pub struct UniformKey(<Context as HasContext>::UniformLocation);

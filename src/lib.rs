@@ -55,29 +55,29 @@ pub fn start<T: App>()
             },
             RawEvent::WindowEvent { event: WindowEvent::KeyboardInput { input: KeyboardInput { state, virtual_keycode: Some(key), .. }, .. }, .. } =>
             {
-                app.as_mut().unwrap().input(Event::Key { key, state });
+                if let Some(app) = &mut app { app.input(Event::Key { key, state }); }
             },
             RawEvent::WindowEvent { event: WindowEvent::MouseInput { button, state, .. }, .. } =>
             {
-                app.as_mut().unwrap().input(Event::Click { button, state });
+                if let Some(app) = &mut app { app.input(Event::Click { button, state }); }
             },
             RawEvent::WindowEvent { event: WindowEvent::CursorMoved { position, .. }, .. } =>
             {
                 let position: (f32, f32) = position.into();
-                app.as_mut().unwrap().input(Event::Cursor { position: (position.0, dims.1 as f32 - position.1) });
+                if let Some(app) = &mut app { app.input(Event::Cursor { position: (position.0, dims.1 as f32 - position.1) }); }
             },
             RawEvent::WindowEvent { event: WindowEvent::MouseWheel { delta, .. }, .. } =>
             {
-                app.as_mut().unwrap().input(Event::Scroll(match delta
+                if let Some(app) = &mut app { app.input(Event::Scroll(match delta
                 {
                     MouseScrollDelta::LineDelta(x, y) => Scroll::Wheel(x, y),
                     MouseScrollDelta::PixelDelta(p) => Scroll::Touch(p.x as f32, p.y as f32)
-                }));
+                })); }
             },
             RawEvent::WindowEvent { event: WindowEvent::Touch(Touch { phase, location, id, .. }), .. } =>
             {
                 let position: (f32, f32) = location.into();
-                app.as_mut().unwrap().input(Event::Touch { position: (position.0, dims.1 as f32 - position.1), phase, finger: id });
+                if let Some(app) = &mut app { app.input(Event::Touch { position: (position.0, dims.1 as f32 - position.1), phase, finger: id }); }
             },
             RawEvent::Resumed =>
             {
@@ -101,10 +101,7 @@ pub fn start<T: App>()
                 then = now;
 
                 gl.window_dims = dims;
-                if !app.frame(dt, &mut gl, dims)
-                {
-                    *control_flow = ControlFlow::Exit;
-                }
+                if !app.frame(dt, &mut gl, dims) { *control_flow = ControlFlow::Exit; }
 
                 stuff.swap_buffers();
             },

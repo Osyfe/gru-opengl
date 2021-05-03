@@ -17,92 +17,50 @@ macro_rules! gl_able
 	}
 }
 
+pub enum RenderTarget<'a>
+{
+	Screen,
+	Texture(&'a mut Framebuffer)
+}
+
+pub struct RenderPassInfo
+{
+	pub clear_color: Option<(f32, f32, f32)>,
+	pub clear_depth: bool
+}
+
+pub struct RenderPass<'a>
+{
+	gl: &'a mut Gl,
+	render_target: RenderTarget<'a>
+}
+
+#[derive(Clone, Copy)]
+pub struct PipelineInfo
+{
+	pub depth_test: bool,
+	pub alpha_blend: bool,
+	pub face_cull: bool
+}
+
+pub struct Pipeline<'a>
+{
+	gl: &'a mut Gl,
+	texture_active: u8,
+	texture_lock: u8,
+	texture_used: bool
+}
+
 impl Gl
 {
-	pub fn new_shader(&mut self, vertex_glsl: &str, fragment_glsl: &str) -> Shader
-	{
-		let gl = &self.raw;
-		let program = unsafe { gl.create_program() }.unwrap();
-		//shader
-		let vertex_shader = unsafe
-		{
-			let shader = gl.create_shader(glow::VERTEX_SHADER).unwrap();
-			gl.shader_source(shader, &format!("{}\n{}", self.glsl_vertex_header, vertex_glsl));
-			gl.compile_shader(shader);
-			if !gl.get_shader_compile_status(shader)
-			{
-				let info = gl.get_shader_info_log(shader);
-				log(&info);
-				panic!("{}", info);
-			}
-			gl.attach_shader(program, shader);
-			shader
-		};
-		let fragment_shader = unsafe
-		{
-			let shader = gl.create_shader(glow::FRAGMENT_SHADER).unwrap();
-			gl.shader_source(shader, &format!("{}\n{}", self.glsl_fragment_header, fragment_glsl));
-			gl.compile_shader(shader);
-			if !gl.get_shader_compile_status(shader)
-			{
-				let info = gl.get_shader_info_log(shader);
-				log(&info);
-				panic!("{}", info);
-			}
-			gl.attach_shader(program, shader);
-			shader
-		};
-		let mut uniforms = HashMap::new();
-		unsafe
-		{
-			//1. link
-			gl.link_program(program);
-	        if !gl.get_program_link_status(program)
-			{
-				let info = gl.get_program_info_log(program);
-				log(&info);
-				panic!("{}", info);
-			}
-	        //extract attributes
-			let len = gl.get_active_attributes(program);
-			for i in 0..len
-			{
-				let attribute = gl.get_active_attribute(program, i).unwrap();
-				Self::attribute_location(&mut self.attributes, &attribute.name, &mut |name, location| gl.bind_attrib_location(program, location, name));
-			}
-			//2. link
-			gl.link_program(program);
-	        if !gl.get_program_link_status(program)
-			{
-				let info = gl.get_program_info_log(program);
-				log(&info);
-				panic!("{}", info);
-			}
-			//clean
-			gl.detach_shader(program, vertex_shader);
-	        gl.delete_shader(vertex_shader);
-	        gl.detach_shader(program, fragment_shader);
-	        gl.delete_shader(fragment_shader);
-			//extract uniforms
-			let len = gl.get_active_uniforms(program);
-			for i in 0..len
-			{
-				let uniform = gl.get_active_uniform(program, i).unwrap();
-				let location = gl.get_uniform_location(program, &uniform.name).unwrap();
-				uniforms.insert(uniform.name, location);
-			}
-		}
-        Shader { gl: gl.clone(), program, uniforms }
-	}
-	
 	#[inline]
-	pub fn render_pass<'a>(&'a mut self, framebuffer: Option<&'a mut Framebuffer>, info: RenderPassInfo) -> RenderPass<'a>
+	pub fn render_pass<'a>(&'a mut self, render_target: RenderTarget<'a>, info: RenderPassInfo) -> RenderPass<'a>
 	{
 		let gl = &self.raw;
-		let (width, height) = match &framebuffer
+		let (width, height) = match &render_target
 		{
-			None => (self.window_dims.0 as i32, self.window_dims.1 as i32),
-			Some(framebuffer) =>
+			RenderTarget::Screen => (self.window_dims.0 as i32, self.window_dims.1 as i32),
+			RenderTarget::Texture(framebuffer) =>
 			{
 				unsafe { gl.bind_framebuffer(glow::FRAMEBUFFER, Some(framebuffer.framebuffer)); }
 				(framebuffer.size as i32, framebuffer.size as i32)
@@ -122,20 +80,8 @@ impl Gl
 			}
 			unsafe { gl.clear(if info.clear_depth { glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT } else { glow::COLOR_BUFFER_BIT }); }
 		} else if info.clear_depth { unsafe { gl.clear(glow::DEPTH_BUFFER_BIT); } }
-		RenderPass { gl: self, framebuffer }
+		RenderPass { gl: self, render_target }
 	}
-}
-
-pub struct RenderPassInfo
-{
-	pub clear_color: Option<(f32, f32, f32)>,
-	pub clear_depth: bool
-}
-
-pub struct RenderPass<'a>
-{
-	gl: &'a mut Gl,
-	framebuffer: Option<&'a mut Framebuffer>
 }
 
 impl<'a> RenderPass<'a>
@@ -148,7 +94,7 @@ impl<'a> RenderPass<'a>
 		gl_able!(gl, info, self.gl.pipeline, alpha_blend, BLEND);
 		gl_able!(gl, info, self.gl.pipeline, face_cull, CULL_FACE);
 		unsafe { gl.use_program(Some(shader.program)); }
-		Pipeline { gl: &mut self.gl, shader, texture_active: 0, texture_lock: 0, texture_used: false }
+		Pipeline { gl: &mut self.gl, texture_active: 0, texture_lock: 0, texture_used: false }
 	}
 }
 
@@ -157,143 +103,126 @@ impl Drop for RenderPass<'_>
 	#[inline]
 	fn drop(&mut self)
 	{
-		if self.framebuffer.is_some() { unsafe { self.gl.raw.bind_framebuffer(glow::FRAMEBUFFER, None); } }
+		if let RenderTarget::Texture(_) = self.render_target { unsafe { self.gl.raw.bind_framebuffer(glow::FRAMEBUFFER, None); } }
 	}
-}
-
-#[derive(Clone, Copy)]
-pub struct PipelineInfo
-{
-	pub depth_test: bool,
-	pub alpha_blend: bool,
-	pub face_cull: bool
-}
-
-pub struct Pipeline<'a>
-{
-	gl: &'a mut Gl,
-	shader: &'a Shader,
-	texture_active: u8,
-	texture_lock: u8,
-	texture_used: bool
 }
 
 impl<'a> Pipeline<'a>
 {
 	#[inline]
-	pub fn uniform_f1(&mut self, name: &str, value: f32) -> &mut Self
+	pub fn uniform_f1(&mut self, key: &UniformKey, value: f32) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_1_f32(self.shader.uniforms.get(name), value); }
+		unsafe { self.gl.raw.uniform_1_f32(Some(&key.0), value); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_f2(&mut self, name: &str, value: Vec2) -> &mut Self
+	pub fn uniform_f2(&mut self, key: &UniformKey, value: Vec2) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_2_f32(self.shader.uniforms.get(name), value.0, value.1); }
+		unsafe { self.gl.raw.uniform_2_f32(Some(&key.0), value.0, value.1); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_f3(&mut self, name: &str, value: Vec3) -> &mut Self
+	pub fn uniform_f3(&mut self, key: &UniformKey, value: Vec3) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_3_f32(self.shader.uniforms.get(name), value.0, value.1, value.2); }
+		unsafe { self.gl.raw.uniform_3_f32(Some(&key.0), value.0, value.1, value.2); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_f4(&mut self, name: &str, value: Vec4) -> &mut Self
+	pub fn uniform_f4(&mut self, key: &UniformKey, value: Vec4) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_4_f32(self.shader.uniforms.get(name), value.0, value.1, value.2, value.3); }
+		unsafe { self.gl.raw.uniform_4_f32(Some(&key.0), value.0, value.1, value.2, value.3); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_i1(&mut self, name: &str, v0: i32) -> &mut Self
+	pub fn uniform_i1(&mut self, key: &UniformKey, v0: i32) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_1_i32(self.shader.uniforms.get(name), v0); }
+		unsafe { self.gl.raw.uniform_1_i32(Some(&key.0), v0); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_i2(&mut self, name: &str, (v0, v1): (i32, i32)) -> &mut Self
+	pub fn uniform_i2(&mut self, key: &UniformKey, (v0, v1): (i32, i32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_2_i32(self.shader.uniforms.get(name), v0, v1); }
+		unsafe { self.gl.raw.uniform_2_i32(Some(&key.0), v0, v1); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_i3(&mut self, name: &str, (v0, v1, v2): (i32, i32, i32)) -> &mut Self
+	pub fn uniform_i3(&mut self, key: &UniformKey, (v0, v1, v2): (i32, i32, i32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_3_i32(self.shader.uniforms.get(name), v0, v1, v2); }
+		unsafe { self.gl.raw.uniform_3_i32(Some(&key.0), v0, v1, v2); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_i4(&mut self, name: &str, (v0, v1, v2, v3): (i32, i32, i32, i32)) -> &mut Self
+	pub fn uniform_i4(&mut self, key: &UniformKey, (v0, v1, v2, v3): (i32, i32, i32, i32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_4_i32(self.shader.uniforms.get(name), v0, v1, v2, v3); }
+		unsafe { self.gl.raw.uniform_4_i32(Some(&key.0), v0, v1, v2, v3); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_u1(&mut self, name: &str, v0: u32) -> &mut Self
+	pub fn uniform_u1(&mut self, key: &UniformKey, v0: u32) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_1_u32(self.shader.uniforms.get(name), v0); }
+		unsafe { self.gl.raw.uniform_1_u32(Some(&key.0), v0); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_u2(&mut self, name: &str, (v0, v1): (u32, u32)) -> &mut Self
+	pub fn uniform_u2(&mut self, key: &UniformKey, (v0, v1): (u32, u32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_2_u32(self.shader.uniforms.get(name), v0, v1); }
+		unsafe { self.gl.raw.uniform_2_u32(Some(&key.0), v0, v1); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_u3(&mut self, name: &str, (v0, v1, v2): (u32, u32, u32)) -> &mut Self
+	pub fn uniform_u3(&mut self, key: &UniformKey, (v0, v1, v2): (u32, u32, u32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_3_u32(self.shader.uniforms.get(name), v0, v1, v2); }
+		unsafe { self.gl.raw.uniform_3_u32(Some(&key.0), v0, v1, v2); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_u4(&mut self, name: &str, (v0, v1, v2, v3): (u32, u32, u32, u32)) -> &mut Self
+	pub fn uniform_u4(&mut self, key: &UniformKey, (v0, v1, v2, v3): (u32, u32, u32, u32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_4_u32(self.shader.uniforms.get(name), v0, v1, v2, v3); }
+		unsafe { self.gl.raw.uniform_4_u32(Some(&key.0), v0, v1, v2, v3); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_mat2(&mut self, name: &str, value: Mat2) -> &mut Self
+	pub fn uniform_mat2(&mut self, key: &UniformKey, value: Mat2) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_matrix_2_f32_slice(self.shader.uniforms.get(name), false, &value.to_array()); }
+		unsafe { self.gl.raw.uniform_matrix_2_f32_slice(Some(&key.0), false, &value.to_array()); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_mat3(&mut self, name: &str, value: Mat3) -> &mut Self
+	pub fn uniform_mat3(&mut self, key: &UniformKey, value: Mat3) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_matrix_3_f32_slice(self.shader.uniforms.get(name), false, &value.to_array()); }
+		unsafe { self.gl.raw.uniform_matrix_3_f32_slice(Some(&key.0), false, &value.to_array()); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_mat4(&mut self, name: &str, value: Mat4) -> &mut Self
+	pub fn uniform_mat4(&mut self, key: &UniformKey, value: Mat4) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_matrix_4_f32_slice(self.shader.uniforms.get(name), false, &value.to_array()); }
+		unsafe { self.gl.raw.uniform_matrix_4_f32_slice(Some(&key.0), false, &value.to_array()); }
 		self
 	}
 
 	#[inline]
-	pub fn uniform_texture(&mut self, name: &str, value: &Texture, persistent: bool) -> &mut Self
+	pub fn uniform_texture(&mut self, key: &UniformKey, value: &Texture, persistent: bool) -> &mut Self
 	{
 		if let Some(id) = (0..8).map(|id| (id + self.texture_active) % 8).filter(|id| self.texture_lock & (1 << id) == 0).next()
 		{
 			let gl = &self.gl.raw;
 			unsafe
 			{
-				gl.uniform_1_i32(self.shader.uniforms.get(name), id as i32);
+				gl.uniform_1_i32(Some(&key.0), id as i32);
 				gl.active_texture(glow::TEXTURE0 + id as u32);
 				gl.bind_texture(glow::TEXTURE_2D, Some(value.texture));
 			}
