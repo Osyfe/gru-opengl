@@ -63,7 +63,7 @@ impl Gl
 			RenderTarget::Texture(framebuffer) =>
 			{
 				unsafe { gl.bind_framebuffer(glow::FRAMEBUFFER, Some(framebuffer.framebuffer)); }
-				(framebuffer.size as i32, framebuffer.size as i32)
+				(framebuffer.size() as i32, framebuffer.size() as i32)
 			}
 		};
 		if (width, height) != self.viewport

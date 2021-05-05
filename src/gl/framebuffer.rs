@@ -33,7 +33,7 @@ impl Gl
 			} else { None };
 
 			gl.bind_framebuffer(glow::FRAMEBUFFER, None);
-			Framebuffer { gl: gl.clone(), framebuffer, color, depth, size: *size }
+			Framebuffer { gl: gl.clone(), framebuffer, color, depth }
 		}
 	}
 }
@@ -48,11 +48,13 @@ pub struct FramebufferConfig
 
 impl Framebuffer
 {
+	#[inline]
 	pub fn size(&self) -> u32
 	{
-		self.size
+		self.color.size
 	}
 	
+	#[inline]
 	pub fn texture(&self) -> &Texture
 	{
 		&self.color

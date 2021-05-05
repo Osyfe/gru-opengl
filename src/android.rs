@@ -3,9 +3,7 @@ use khronos_egl as egl;
 
 pub fn log(msg: &str)
 {
-    let rust = std::ffi::CString::new("Rust").unwrap();
-    let msg = std::ffi::CString::new(msg).unwrap();
-    ndk_glue::android_log(log::Level::Error, &rust, &msg);
+    println!("{}", msg);
 }
 
 pub struct Stuff

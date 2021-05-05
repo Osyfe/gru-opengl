@@ -124,8 +124,7 @@ pub struct Framebuffer
 	gl: Rc<Context>,
 	framebuffer: <Context as HasContext>::Framebuffer,
 	color: Texture,
-	depth: Option<<Context as HasContext>::Renderbuffer>,
-	size: u32
+	depth: Option<<Context as HasContext>::Renderbuffer>
 }
 
 #[derive(Clone)]
