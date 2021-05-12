@@ -1,4 +1,8 @@
-file io
-sound
+file io android bug fixes
+sound android bug fixes
+
 networking
 threads?
+
+winit 0.25 dep (ndk-glue must be 0.3.0!)
+android installLocation?

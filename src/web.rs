@@ -8,31 +8,97 @@ extern "C"
     pub fn log(msg: &str);
 }
 
-pub struct Stuff;
+pub(crate) struct Stuff;
 
 impl Stuff
 {
-    pub fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
+    pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, fs::Storage, &'static str,  &'static str)
     {
         use winit::platform::web::WindowBuilderExtWebSys;
         use wasm_bindgen::JsCast;
-        let canvas: web_sys::HtmlCanvasElement = web_sys::window().unwrap().document().unwrap().get_element_by_id("canvas").unwrap().dyn_into().unwrap();
+        let web_window = web_sys::window().unwrap();
+        let canvas: web_sys::HtmlCanvasElement = web_window.document().unwrap().get_element_by_id("canvas").unwrap().dyn_into().unwrap();
         let context: web_sys::WebGlRenderingContext = canvas.get_context("webgl").unwrap().unwrap().dyn_into().unwrap();
-        let gl = glow::Context::from_webgl1_context(context);
         let window = WindowBuilder::new().with_canvas(Some(canvas)).build(&event_loop).unwrap();
-        (window, Self, gl, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
+        let gl = glow::Context::from_webgl1_context(context);
+        let storage = fs::Storage { storage: web_window.local_storage().unwrap().unwrap() };
+        (window, Self, gl, storage, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
     }
 
-    pub fn resumed(&mut self, _window: &Window) {}
+    pub(crate) fn init(&mut self, _window: &Window) {}
 
-    pub fn active(&self) -> bool { true }
+    pub(crate) fn active(&self) -> bool { true }
 
-    pub fn suspended(&mut self) {}
+    pub(crate) fn deinit(&mut self) {}
 
-    pub fn swap_buffers(&self) {}
+    pub(crate) fn swap_buffers(&self) {}
 }
 
-pub type Instant = f64;
-pub type Duration = f64;
-pub fn instant() -> Instant { web_sys::window().unwrap().performance().unwrap().now() }
-pub fn secs(duration: Duration) -> f32 { (duration / 1e3) as f32 }
+pub mod time
+{
+    #[derive(Clone, Copy)]
+    pub struct Instant(f64);
+    pub fn now() -> Instant { Instant(web_sys::window().unwrap().performance().unwrap().now()) }
+    pub fn duration_secs(first: Instant, second: Instant) -> f32 { ((second.0 - first.0) / 1e3) as f32 }
+}
+
+pub mod fs
+{
+    use web_sys::{XmlHttpRequest, XmlHttpRequestResponseType};
+    use js_sys::Uint8Array;
+
+    pub(crate) struct File
+    {
+        name: String,
+        request: XmlHttpRequest,
+        data: Option<Vec<u8>>
+    }
+
+    impl File
+    {
+        pub(crate) fn load(name: &str) -> Self
+        {
+            let name = name.to_string();
+            let request = XmlHttpRequest::new().unwrap();
+            request.open_with_async("GET", &format!("data/{}", name), true).unwrap();
+            request.set_response_type(XmlHttpRequestResponseType::Arraybuffer);
+            request.send().unwrap();
+            Self { name, request, data: None }
+        }
+
+        pub(crate) fn finished(&mut self) -> bool
+        {
+            if self.data.is_some() { return true; }
+            if self.request.ready_state() == 4 && self.request.status().unwrap() == 200 //DONE && OK
+            {
+                self.data = Some(Uint8Array::new_with_byte_offset(&self.request.response().unwrap(), 0).to_vec());
+                true
+            } else { false }
+        }
+
+        pub(crate) fn get(self) -> Option<(String, Vec<u8>)>
+        {
+            let name = self.name;
+            self.data.map(|vec| (name, vec))
+        }
+    }
+
+    pub struct Storage
+    {
+        pub(crate) storage: web_sys::Storage
+    }
+
+    impl Storage
+    {
+        pub fn set(&mut self, key: &str, value: Option<&str>)
+        {
+            if let Some(value) = value { self.storage.set_item(key, value).unwrap(); }
+            else { self.storage.remove_item(key).unwrap(); }
+        }
+
+        pub fn get(&self, key: &str) -> Option<String>
+        {
+            self.storage.get_item(key).unwrap()
+        }
+    }
+}

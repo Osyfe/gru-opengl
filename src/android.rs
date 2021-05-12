@@ -6,7 +6,7 @@ pub fn log(msg: &str)
     println!("{}", msg);
 }
 
-pub struct Stuff
+pub(crate) struct Stuff
 {
     instance: egl::Instance<egl::Dynamic<libloading::Library, egl::EGL1_1>>,
     display: egl::Display,
@@ -17,7 +17,7 @@ pub struct Stuff
 
 impl Stuff
 {
-    pub fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
+    pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, fs::Storage, &'static str,  &'static str)
     {
         //window
         let window = WindowBuilder::new().build(&event_loop).unwrap();
@@ -54,10 +54,10 @@ impl Stuff
                 None => std::ptr::null()
             }
         }) };
-        (window, Self { instance, display, config, context, surface: None }, gl, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
+        (window, Self { instance, display, config, context, surface: None }, gl, fs::Storage::load(), "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
     }
 
-    pub fn resumed(&mut self, window: &Window)
+    pub(crate) fn init(&mut self, window: &Window)
     {
         if self.surface.is_none()
         {
@@ -78,12 +78,12 @@ impl Stuff
         }
     }
 
-    pub fn active(&self) -> bool
+    pub(crate) fn active(&self) -> bool
     {
         self.surface.is_some()
     }
 
-    pub fn suspended(&mut self)
+    pub(crate) fn deinit(&mut self)
     {
         if self.surface.is_some()
         {
@@ -91,7 +91,7 @@ impl Stuff
         }
     }
 
-    pub fn swap_buffers(&self)
+    pub(crate) fn swap_buffers(&self)
     {
         self.instance.swap_buffers(self.display, *self.surface.as_ref().unwrap()).unwrap();
     }
@@ -102,13 +102,91 @@ impl Drop for Stuff
     fn drop(&mut self)
     {
         self.instance.make_current(self.display, None, None, None).unwrap();
-        self.suspended();
         self.instance.destroy_context(self.display, self.context).unwrap();
         self.instance.terminate(self.display).unwrap();
     }
 }
 
-pub type Instant = std::time::Instant;
-pub type Duration = std::time::Duration;
-pub fn instant() -> Instant { Instant::now() }
-pub fn secs(duration: Duration) -> f32 { duration.as_secs_f32() }
+pub mod time
+{
+    #[derive(Clone, Copy)]
+    pub struct Instant(std::time::Instant);
+    pub fn now() -> Instant { Instant(std::time::Instant::now()) }
+    pub fn duration_secs(first: Instant, second: Instant) -> f32 { (second.0 - first.0).as_secs_f32() }
+}
+
+pub mod fs
+{
+    use std::io::{BufReader, BufWriter, prelude::*};
+    use std::ffi::CString;
+    use std::sync::mpsc::{channel, Receiver};
+    use std::io::Read;
+
+    pub(crate) struct File
+    {
+        receiver: Receiver<(String, Vec<u8>)>,
+        data: Option<(String, Vec<u8>)>
+    }
+
+    impl File
+    {
+        pub(crate) fn load(name: &str) -> Self
+        {
+            let c_name = CString::new(name).unwrap();
+            let name = name.to_string();
+            let (sender, receiver) = channel();
+            std::thread::spawn(move ||
+            {
+                let mut contents = Vec::new();
+                ndk_glue::native_activity().asset_manager().open(&c_name).unwrap().read_to_end(&mut contents).unwrap();
+                sender.send((name, contents)).unwrap();
+            });
+            Self { receiver, data: None } 
+        }
+
+        pub(crate) fn finished(&mut self) -> bool
+        {
+            if self.data.is_some() { return true; }
+            match self.receiver.try_recv()
+            {
+                Ok(data) => { self.data = Some(data); true },
+                Err(_) => false
+            }
+        }
+
+        pub(crate) fn get(self) -> Option<(String, Vec<u8>)>
+        {
+            self.data
+        }
+    }
+
+    pub struct Storage
+    {
+        path: String
+    }
+
+    impl Storage
+    {
+        pub(crate) fn load() -> Self
+        {
+            let path = ndk_glue::native_activity().internal_data_path().to_str().unwrap().to_string();
+            Self { path }
+        }
+
+        pub fn set(&mut self, key: &str, value: Option<&str>)
+        {
+            if let Some(value) = value { BufWriter::new(std::fs::File::create(&format!("{}/{}", self.path, key)).unwrap()).write_all(value.as_bytes()).unwrap(); }
+            else { std::fs::remove_file(&format!("{}/{}", self.path, key)).ok(); }
+        }
+
+        pub fn get(&self, key: &str) -> Option<String>
+        {
+            std::fs::File::open(&format!("{}/{}", self.path, key)).ok().map(|file|
+            {
+                let mut contents = Vec::new();
+                BufReader::new(file).read_to_end(&mut contents).unwrap();
+                String::from_utf8(contents).unwrap()
+            })
+        }
+    }
+}
