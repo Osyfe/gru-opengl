@@ -16,7 +16,7 @@ impl Stuff
     pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, fs::Storage, &'static str,  &'static str)
     {
         let mut builder = WindowBuilder::new();
-        if cfg!(target_os = "windows")
+        #[cfg(target_os = "windows")]
         {
             use winit::platform::windows::WindowBuilderExtWindows;
             builder = builder.with_drag_and_drop(false); //conflicts with rodio
