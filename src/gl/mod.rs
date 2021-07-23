@@ -70,6 +70,14 @@ impl Gl
 
 			gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
 		}
+		self.viewport = (-1, -1);
+		self.clear_color = (0.0, 0.0, 0.0);
+		self.pipeline = PipelineInfo
+		{
+			depth_test: true,
+			alpha_blend: false,
+			face_cull: true
+		};
 		self
 	}
 
@@ -97,7 +105,7 @@ pub struct VertexBuffer<T: AttributesReprCpacked>
 	length: u32,
 	attributes: Vec<(BufferType, u32, i32)>
 }
-//u16
+//u16 indices
 pub struct IndexBuffer
 {
 	gl: Rc<Context>,

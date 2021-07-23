@@ -19,7 +19,7 @@ impl Stuff
         #[cfg(target_os = "windows")]
         {
             use winit::platform::windows::WindowBuilderExtWindows;
-            builder = builder.with_drag_and_drop(false); //conflicts with rodio
+            builder = builder.with_drag_and_drop(false); //conflicts with cpal
         }
         let window = builder.build(&event_loop).unwrap();
         let config = GlConfig

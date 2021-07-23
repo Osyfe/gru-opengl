@@ -98,15 +98,6 @@ impl<'a> RenderPass<'a>
 	}
 }
 
-impl Drop for RenderPass<'_>
-{
-	#[inline]
-	fn drop(&mut self)
-	{
-		if let RenderTarget::Texture(_) = self.render_target { unsafe { self.gl.raw.bind_framebuffer(glow::FRAMEBUFFER, None); } }
-	}
-}
-
 impl<'a> Pipeline<'a>
 {
 	#[inline]
@@ -285,5 +276,14 @@ impl Drop for Pipeline<'_>
 			if self.texture_used { gl.bind_texture(glow::TEXTURE_2D, None); }
 			gl.use_program(None);
 		}
+	}
+}
+
+impl Drop for RenderPass<'_>
+{
+	#[inline]
+	fn drop(&mut self)
+	{
+		if let RenderTarget::Texture(_) = self.render_target { unsafe { self.gl.raw.bind_framebuffer(glow::FRAMEBUFFER, None); } }
 	}
 }
