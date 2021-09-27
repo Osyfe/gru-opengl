@@ -5,8 +5,8 @@ authors = ["Jannik Fehre"]
 edition = "2018"
 
 [dependencies]
-glow = "0.9.0"
-gru-math = { path = "../gru-misc/gru-math" }
+glow = "0.11.0"
+gru-misc = { path = "../gru-misc", features = ["math"] }
 
 # desktop
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
@@ -14,12 +14,14 @@ raw-gl-context = "0.1.2"
 bincode = "1.3.3"
 
 # non web
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-winit = { git = "https://github.com/rust-windowing/winit", features = [] }
+[target.'cfg(target_os = "linux")'.dependencies]
+winit = { version = "0.25.0", default-features = false, features = ["x11"] }
+[target.'cfg(all(not(target_arch = "wasm32"), not(target_os = "linux")))'.dependencies]
+winit = { version = "0.25.0", default-features = false }
 
 # web
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-winit = { git = "https://github.com/rust-windowing/winit", features = ["web-sys"] }
+winit = { version = "0.25.0", default-features = false, features = ["web-sys"] }
 js-sys = "0.3.50"
 wasm-bindgen = "0.2.73"
 web-sys = { version = "0.3.4", features = ["Window", "Document", "Element", "HtmlCanvasElement", "WebGlRenderingContext", "WebGlBuffer", "WebGlShader", "WebGlProgram", "Performance", "XmlHttpRequest", "XmlHttpRequestResponseType", "Storage"] }

@@ -51,6 +51,29 @@ pub struct Pipeline<'a>
 	texture_used: bool
 }
 
+#[derive(Clone, Copy)]
+pub enum Primitives
+{
+	Points,
+	Lines,
+	LineStrip,
+	Triangles
+}
+
+impl Primitives
+{
+	const fn gl_name(&self) -> u32
+	{
+		match self
+		{
+			Self::Points => glow::POINTS,
+			Self::Lines => glow::LINES,
+			Self::LineStrip => glow::LINE_STRIP,
+			Self::Triangles => glow::TRIANGLES
+		}
+	}
+}
+
 impl Gl
 {
 	#[inline]
@@ -225,7 +248,7 @@ impl<'a> Pipeline<'a>
 	}
 
 	#[inline]
-	pub fn draw<T: AttributesReprCpacked>(&mut self, vertices: &VertexBuffer<T>, indices: Option<&IndexBuffer>, offset: u32, count: u32)
+	pub fn draw<T: AttributesReprCpacked>(&mut self, primitives: Primitives, vertices: &VertexBuffer<T>, indices: Option<&IndexBuffer>, offset: u32, count: u32)
 	{
 		let gl = &self.gl.raw;
 		unsafe
@@ -247,13 +270,13 @@ impl<'a> Pipeline<'a>
 				None =>
 				{
 					if offset + count > vertices.length { panic!("Pipeline::draw: Not enough vertices in buffer."); }
-					gl.draw_arrays(glow::TRIANGLES, offset as i32, count as i32);
+					gl.draw_arrays(primitives.gl_name(), offset as i32, count as i32);
 				},
 				Some(indices) =>
 				{
 					if offset + count > indices.length { panic!("Pipeline::draw: Not enough indices in buffer."); }
 					gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(indices.buffer));
-					gl.draw_elements(glow::TRIANGLES, count as i32, glow::UNSIGNED_SHORT, offset as i32);
+					gl.draw_elements(primitives.gl_name(), count as i32, glow::UNSIGNED_SHORT, offset as i32);
 					gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
 				}
 			}

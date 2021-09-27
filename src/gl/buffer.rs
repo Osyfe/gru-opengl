@@ -59,9 +59,9 @@ pub trait AttributesReprCpacked
 #[derive(Clone, Copy)]
 pub enum BufferAccess
 {
-	STATIC,
-	STREAM,
-	DYNAMIC
+	Static,
+	Stream,
+	Dynamic
 }
 
 impl BufferAccess
@@ -70,9 +70,9 @@ impl BufferAccess
 	{
 		match self
 		{
-			Self::STATIC => glow::STATIC_DRAW,
-			Self::STREAM => glow::STREAM_DRAW,
-			Self::DYNAMIC => glow::DYNAMIC_DRAW
+			Self::Static => glow::STATIC_DRAW,
+			Self::Stream => glow::STREAM_DRAW,
+			Self::Dynamic => glow::DYNAMIC_DRAW
 		}
 	}
 }

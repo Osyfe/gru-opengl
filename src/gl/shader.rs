@@ -9,12 +9,14 @@ impl Gl
 		//shader
 		let vertex_shader = unsafe
 		{
+			let source = format!("{}\n{}", self.glsl_vertex_header, vertex_glsl);
 			let shader = gl.create_shader(glow::VERTEX_SHADER).unwrap();
-			gl.shader_source(shader, &format!("{}\n{}", self.glsl_vertex_header, vertex_glsl));
+			gl.shader_source(shader, &source);
 			gl.compile_shader(shader);
 			if !gl.get_shader_compile_status(shader)
 			{
 				let info = gl.get_shader_info_log(shader);
+				log(&source);
 				log(&info);
 				panic!("{}", info);
 			}
@@ -23,12 +25,14 @@ impl Gl
 		};
 		let fragment_shader = unsafe
 		{
+			let source = format!("{}\n{}", self.glsl_fragment_header, fragment_glsl);
 			let shader = gl.create_shader(glow::FRAGMENT_SHADER).unwrap();
-			gl.shader_source(shader, &format!("{}\n{}", self.glsl_fragment_header, fragment_glsl));
+			gl.shader_source(shader, &source);
 			gl.compile_shader(shader);
 			if !gl.get_shader_compile_status(shader)
 			{
 				let info = gl.get_shader_info_log(shader);
+				log(&source);
 				log(&info);
 				panic!("{}", info);
 			}

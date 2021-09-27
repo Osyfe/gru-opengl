@@ -1,5 +1,5 @@
 use super::log;
-use gru_math::*;
+use gru_misc::math::*;
 use glow::{Context, HasContext};
 use std::marker::PhantomData;
 use std::rc::Rc;
