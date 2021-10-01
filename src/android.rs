@@ -17,7 +17,7 @@ pub(crate) struct Stuff
 
 impl Stuff
 {
-    pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, fs::Storage, &'static str,  &'static str)
+    pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
     {
         //window
         let window = WindowBuilder::new().build(&event_loop).unwrap();
@@ -54,7 +54,7 @@ impl Stuff
                 None => std::ptr::null()
             }
         }) };
-        (window, Self { instance, display, config, context, surface: None }, gl, fs::Storage::load(), "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
+        (window, Self { instance, display, config, context, surface: None }, gl, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
     }
 
     pub(crate) fn init(&mut self, window: &Window)
@@ -115,6 +115,7 @@ pub mod time
     pub fn duration_secs(first: Instant, second: Instant) -> f32 { (second.0 - first.0).as_secs_f32() }
 }
 
+#[cfg(feature = "fs")]
 pub mod fs
 {
     use std::io::{BufReader, BufWriter, prelude::*};

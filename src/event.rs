@@ -13,5 +13,6 @@ pub enum Event
     Cursor { position: (f32, f32) },
     Scroll(Scroll),
     Touch { position: (f32, f32), phase: TouchPhase, finger: u64 },
+    #[cfg(feature = "fs")]
     File(String, Vec<u8>)
 }

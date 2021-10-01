@@ -21,8 +21,7 @@ impl Stuff
         let context: web_sys::WebGlRenderingContext = canvas.get_context("webgl").unwrap().unwrap().dyn_into().unwrap();
         let window = WindowBuilder::new().with_canvas(Some(canvas)).build(&event_loop).unwrap();
         let gl = glow::Context::from_webgl1_context(context);
-        let storage = fs::Storage { storage: web_window.local_storage().unwrap().unwrap() };
-        (window, Self, gl, storage, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
+        (window, Self, gl, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
     }
 
     pub(crate) fn init(&mut self, _window: &Window) {}
@@ -42,6 +41,7 @@ pub mod time
     pub fn duration_secs(first: Instant, second: Instant) -> f32 { ((second.0 - first.0) / 1e3) as f32 }
 }
 
+#[cfg(feature = "fs")]
 pub mod fs
 {
     use web_sys::{XmlHttpRequest, XmlHttpRequestResponseType};
@@ -90,6 +90,11 @@ pub mod fs
 
     impl Storage
     {
+        pub(crate) fn load() -> Self
+        {
+            web_sys::window().unwrap().local_storage().unwrap().unwrap()
+        }
+
         pub fn set(&mut self, key: &str, value: Option<&str>)
         {
             if let Some(value) = value { self.storage.set_item(key, value).unwrap(); }

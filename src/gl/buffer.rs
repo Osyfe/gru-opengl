@@ -80,6 +80,12 @@ impl BufferAccess
 impl<T: AttributesReprCpacked> VertexBuffer<T>
 {
 	#[inline]
+	pub fn len(&self) -> u32
+	{
+		self.length
+	}
+
+	#[inline]
 	pub fn data(&mut self, offset: u32, data: &[T])
 	{
 		if offset + data.len() as u32 > self.length { panic!("VertexBuffer::data: Too much data."); }
@@ -97,6 +103,12 @@ impl<T: AttributesReprCpacked> VertexBuffer<T>
 
 impl IndexBuffer
 {
+	#[inline]
+	pub fn len(&self) -> u32
+	{
+		self.length
+	}
+	
 	#[inline]
 	pub fn data(&mut self, offset: u32, data: &[u16])
 	{

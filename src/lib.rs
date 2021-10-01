@@ -28,9 +28,12 @@ pub mod gl;
 pub fn start<T: App>()
 {
     let event_loop = EventLoop::new();
-    let (window, mut stuff, gl, storage, glsl_vertex_header, glsl_fragment_header) = Stuff::new(&event_loop);
+    let (window, mut stuff, gl, glsl_vertex_header, glsl_fragment_header) = Stuff::new(&event_loop);
     let gl = gl::Gl::new(gl, glsl_vertex_header, glsl_fragment_header);
-    let mut ctx = Context { gl, storage, files: Vec::new() };
+    #[cfg(feature = "fs")]
+    let mut ctx = Context { gl, storage: fs::Storage::load(), files: Vec::new() };
+    #[cfg(not(feature = "fs"))]
+    let mut ctx = Context { gl };
     let mut app = None;
 
     let mut dims = window.inner_size().into();
@@ -101,6 +104,7 @@ pub fn start<T: App>()
             {
                 let app = app.as_mut().unwrap();
 
+                #[cfg(feature = "fs")]
                 for (name, data) in ctx.check_files().into_iter()
                 {
                     app.input(&mut ctx, Event::File(name, data));
@@ -123,10 +127,13 @@ pub fn start<T: App>()
 pub struct Context
 {
     pub gl: gl::Gl,
+    #[cfg(feature = "fs")]
     pub storage: fs::Storage,
+    #[cfg(feature = "fs")]
     files: Vec<fs::File>
 }
 
+#[cfg(feature = "fs")]
 impl Context
 {
     pub fn load_file(&mut self, name: &str)

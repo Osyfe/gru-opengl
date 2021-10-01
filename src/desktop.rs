@@ -13,7 +13,7 @@ pub(crate) struct Stuff
 
 impl Stuff
 {
-    pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, fs::Storage, &'static str,  &'static str)
+    pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
     {
         let mut builder = WindowBuilder::new();
         #[cfg(target_os = "windows")]
@@ -36,7 +36,7 @@ impl Stuff
         let context = GlContext::create(&window, config).unwrap();
         context.make_current();
         let gl = unsafe { glow::Context::from_loader_function(|symbol| context.get_proc_address(symbol) as *const _) };
-        (window, Self { context }, gl, fs::Storage::load(), "#version 110", "#version 110")
+        (window, Self { context }, gl, "#version 110", "#version 110")
     }
 
     pub(crate) fn init(&mut self, _window: &Window) {}
@@ -59,6 +59,7 @@ pub mod time
     pub fn duration_secs(first: Instant, second: Instant) -> f32 { (second.0 - first.0).as_secs_f32() }
 }
 
+#[cfg(feature = "fs")]
 pub mod fs
 {
     use std::io::{BufReader, BufWriter, prelude::*};

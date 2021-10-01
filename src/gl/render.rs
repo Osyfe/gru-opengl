@@ -29,10 +29,10 @@ pub struct RenderPassInfo
 	pub clear_depth: bool
 }
 
-pub struct RenderPass<'a>
+pub struct RenderPass<'a, 'b>
 {
 	gl: &'a mut Gl,
-	render_target: RenderTarget<'a>
+	render_target: RenderTarget<'b>
 }
 
 #[derive(Clone, Copy)]
@@ -77,7 +77,7 @@ impl Primitives
 impl Gl
 {
 	#[inline]
-	pub fn render_pass<'a>(&'a mut self, render_target: RenderTarget<'a>, info: RenderPassInfo) -> RenderPass<'a>
+	pub fn render_pass<'a, 'b>(&'a mut self, render_target: RenderTarget<'b>, info: RenderPassInfo) -> RenderPass<'a, 'b>
 	{
 		let gl = &self.raw;
 		let (width, height) = match &render_target
@@ -107,10 +107,10 @@ impl Gl
 	}
 }
 
-impl<'a> RenderPass<'a>
+impl<'a, 'b> RenderPass<'a, 'b>
 {
 	#[inline]
-	pub fn pipeline<'b>(&'b mut self, shader: &'a Shader, info: PipelineInfo) -> Pipeline<'b>
+	pub fn pipeline(&mut self, shader: &Shader, info: PipelineInfo) -> Pipeline
 	{
 		let gl = &self.gl.raw;
 		gl_able!(gl, info, self.gl.pipeline, depth_test, DEPTH_TEST);
@@ -302,7 +302,7 @@ impl Drop for Pipeline<'_>
 	}
 }
 
-impl Drop for RenderPass<'_>
+impl Drop for RenderPass<'_, '_>
 {
 	#[inline]
 	fn drop(&mut self)

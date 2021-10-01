@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Jannik Fehre"]
 edition = "2021"
 
+[features]
+default = ["fs"]
+fs = []
+
 [dependencies]
 glow = "0.11.0"
 gru-misc = { path = "../gru-misc", features = ["math"] }
