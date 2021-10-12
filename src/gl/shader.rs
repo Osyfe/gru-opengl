@@ -68,16 +68,14 @@ impl Gl
 			if T::ATTRIBUTES.len() != attributes.len()
 			{
 				let msg = "Wrong number of attributes.";
-				log(msg);
-				//panic!("{}", msg);
+				log(msg); //no panic due to nVidia attribute elision
 			}
 			for (_, name) in T::ATTRIBUTES
 			{
 				if !attributes.iter().any(|attr| attr == name)
 				{
 					let msg = format!("The Shader is missing attribute \"{}\"", name);
-					log(&msg);
-					//panic!("{}", msg);
+					log(&msg); //no panic due to nVidia attribute elision
 				}
 			}
 			//2. link
