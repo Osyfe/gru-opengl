@@ -137,6 +137,31 @@ pub struct Context
 #[cfg(feature = "fs")]
 impl Context
 {
+    pub fn load_file(&mut self, name: &str)
+    {
+        self.files.push(fs::File::load(name));
+    }
+
+    fn check_files(&mut self) -> Vec<(String, Vec<u8>)>
+    {
+        if self.files.len() == 0 { return Vec::new(); }
+        let mut finished = Vec::new();
+        let mut i = self.files.len();
+        while i > 0
+        {
+            i -= 1;
+            if self.files[i].finished()
+            {
+                let file = self.files.remove(i);
+                finished.push(file.get().unwrap());
+            }
+        }
+        finished
+    }
+}
+
+impl Context
+{
     pub fn set_title(&mut self, title: &str)
     {
         self.window.set_title(title);
@@ -161,28 +186,6 @@ impl Context
     {
         let fullscreen = if open { Some(Fullscreen::Borderless(None)) } else { None };
         self.window.set_fullscreen(fullscreen);
-    }
-
-    pub fn load_file(&mut self, name: &str)
-    {
-        self.files.push(fs::File::load(name));
-    }
-
-    fn check_files(&mut self) -> Vec<(String, Vec<u8>)>
-    {
-        if self.files.len() == 0 { return Vec::new(); }
-        let mut finished = Vec::new();
-        let mut i = self.files.len();
-        while i > 0
-        {
-            i -= 1;
-            if self.files[i].finished()
-            {
-                let file = self.files.remove(i);
-                finished.push(file.get().unwrap());
-            }
-        }
-        finished
     }
 }
 
