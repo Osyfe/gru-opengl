@@ -3,7 +3,7 @@ use gru_misc::math::*;
 use glow::{Context, HasContext};
 use std::marker::PhantomData;
 use std::rc::Rc;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 mod drops;
 mod buffer;
@@ -23,6 +23,7 @@ pub struct Gl
 	raw: Rc<Context>,
 	glsl_vertex_header: &'static str,
 	glsl_fragment_header: &'static str,
+	shader_id: u32,
 	viewport: (i32, i32),
 	clear_color: (f32, f32, f32),
 	attributes: HashMap<String, u32>,
@@ -39,6 +40,7 @@ impl Gl
 			raw: Rc::new(gl),
 			glsl_vertex_header,
 			glsl_fragment_header,
+			shader_id: 0,
 			viewport: (-1, -1),
 			clear_color: (0.0, 0.0, 0.0),
 			attributes: HashMap::new(),
@@ -124,7 +126,9 @@ pub struct Shader
 {
 	gl: Rc<Context>,
 	program: <Context as HasContext>::Program,
-	uniforms: HashMap<String, UniformKey>
+	attributes: HashSet<String>,
+	uniforms: HashMap<String, UniformKey>,
+	id: u32
 }
 
 pub struct Framebuffer
@@ -136,4 +140,4 @@ pub struct Framebuffer
 }
 
 #[derive(Clone)]
-pub struct UniformKey(<Context as HasContext>::UniformLocation);
+pub struct UniformKey { key: <Context as HasContext>::UniformLocation, shader_id: u32 }

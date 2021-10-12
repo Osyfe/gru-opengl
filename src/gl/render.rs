@@ -1,4 +1,5 @@
 use super::*;
+use crate::DEBUG;
 
 macro_rules! gl_able
 {
@@ -43,9 +44,10 @@ pub struct PipelineInfo
 	pub face_cull: bool
 }
 
-pub struct Pipeline<'a>
+pub struct Pipeline<'a, 'b>
 {
 	gl: &'a mut Gl,
+	shader: &'b Shader,
 	texture_active: u8,
 	texture_lock: u8,
 	texture_used: bool
@@ -110,133 +112,165 @@ impl Gl
 impl<'a, 'b> RenderPass<'a, 'b>
 {
 	#[inline]
-	pub fn pipeline(&mut self, shader: &Shader, info: PipelineInfo) -> Pipeline
+	pub fn pipeline<'c, 'd>(&'c mut self, shader: &'d Shader, info: PipelineInfo) -> Pipeline<'c, 'd>
 	{
 		let gl = &self.gl.raw;
 		gl_able!(gl, info, self.gl.pipeline, depth_test, DEPTH_TEST);
 		gl_able!(gl, info, self.gl.pipeline, alpha_blend, BLEND);
 		gl_able!(gl, info, self.gl.pipeline, face_cull, CULL_FACE);
 		unsafe { gl.use_program(Some(shader.program)); }
-		Pipeline { gl: &mut self.gl, texture_active: 0, texture_lock: 0, texture_used: false }
+		Pipeline { gl: &mut self.gl, shader, texture_active: 0, texture_lock: 0, texture_used: false }
 	}
 }
 
-impl<'a> Pipeline<'a>
+impl<'a, 'b> Pipeline<'a, 'b>
 {
+	pub fn shader(&self) -> &Shader
+	{
+		&self.shader
+	}
+
+	#[inline(always)]
+	fn check_key(shader: &Shader, key: &UniformKey)
+	{
+		if DEBUG && shader.id != key.shader_id
+		{
+			let msg = "The Shader and UniformKey are incompatible.";
+			log(msg);
+			panic!("{}", msg);
+		}
+	}
+
 	#[inline]
 	pub fn uniform_f1(&mut self, key: &UniformKey, value: f32) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_1_f32(Some(&key.0), value); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_1_f32(Some(&key.key), value); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_f2(&mut self, key: &UniformKey, value: Vec2) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_2_f32(Some(&key.0), value.0, value.1); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_2_f32(Some(&key.key), value.0, value.1); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_f3(&mut self, key: &UniformKey, value: Vec3) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_3_f32(Some(&key.0), value.0, value.1, value.2); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_3_f32(Some(&key.key), value.0, value.1, value.2); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_f4(&mut self, key: &UniformKey, value: Vec4) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_4_f32(Some(&key.0), value.0, value.1, value.2, value.3); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_4_f32(Some(&key.key), value.0, value.1, value.2, value.3); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_i1(&mut self, key: &UniformKey, v0: i32) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_1_i32(Some(&key.0), v0); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_1_i32(Some(&key.key), v0); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_i2(&mut self, key: &UniformKey, (v0, v1): (i32, i32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_2_i32(Some(&key.0), v0, v1); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_2_i32(Some(&key.key), v0, v1); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_i3(&mut self, key: &UniformKey, (v0, v1, v2): (i32, i32, i32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_3_i32(Some(&key.0), v0, v1, v2); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_3_i32(Some(&key.key), v0, v1, v2); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_i4(&mut self, key: &UniformKey, (v0, v1, v2, v3): (i32, i32, i32, i32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_4_i32(Some(&key.0), v0, v1, v2, v3); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_4_i32(Some(&key.key), v0, v1, v2, v3); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_u1(&mut self, key: &UniformKey, v0: u32) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_1_u32(Some(&key.0), v0); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_1_u32(Some(&key.key), v0); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_u2(&mut self, key: &UniformKey, (v0, v1): (u32, u32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_2_u32(Some(&key.0), v0, v1); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_2_u32(Some(&key.key), v0, v1); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_u3(&mut self, key: &UniformKey, (v0, v1, v2): (u32, u32, u32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_3_u32(Some(&key.0), v0, v1, v2); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_3_u32(Some(&key.key), v0, v1, v2); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_u4(&mut self, key: &UniformKey, (v0, v1, v2, v3): (u32, u32, u32, u32)) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_4_u32(Some(&key.0), v0, v1, v2, v3); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_4_u32(Some(&key.key), v0, v1, v2, v3); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_mat2(&mut self, key: &UniformKey, value: Mat2) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_matrix_2_f32_slice(Some(&key.0), false, &value.to_array()); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_matrix_2_f32_slice(Some(&key.key), false, &value.to_array()); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_mat3(&mut self, key: &UniformKey, value: Mat3) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_matrix_3_f32_slice(Some(&key.0), false, &value.to_array()); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_matrix_3_f32_slice(Some(&key.key), false, &value.to_array()); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_mat4(&mut self, key: &UniformKey, value: Mat4) -> &mut Self
 	{
-		unsafe { self.gl.raw.uniform_matrix_4_f32_slice(Some(&key.0), false, &value.to_array()); }
+		Self::check_key(&self.shader, key);
+		unsafe { self.gl.raw.uniform_matrix_4_f32_slice(Some(&key.key), false, &value.to_array()); }
 		self
 	}
 
 	#[inline]
 	pub fn uniform_texture(&mut self, key: &UniformKey, value: &Texture, persistent: bool) -> &mut Self
 	{
+		Self::check_key(&self.shader, key);
 		if let Some(id) = (0..8).map(|id| (id + self.texture_active) % 8).filter(|id| self.texture_lock & (1 << id) == 0).next()
 		{
 			let gl = &self.gl.raw;
 			unsafe
 			{
-				gl.uniform_1_i32(Some(&key.0), id as i32);
+				gl.uniform_1_i32(Some(&key.key), id as i32);
 				gl.active_texture(glow::TEXTURE0 + id as u32);
 				gl.bind_texture(glow::TEXTURE_2D, Some(value.texture));
 			}
@@ -288,7 +322,7 @@ impl<'a> Pipeline<'a>
 	}
 }
 
-impl Drop for Pipeline<'_>
+impl Drop for Pipeline<'_, '_>
 {
 	#[inline]
 	fn drop(&mut self)

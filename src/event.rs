@@ -1,4 +1,4 @@
-pub use winit::event::{ElementState, VirtualKeyCode as KeyCode, MouseButton, TouchPhase};
+pub use winit::event::{VirtualKeyCode as KeyCode, MouseButton, TouchPhase};
 
 pub enum Scroll
 {
@@ -8,8 +8,8 @@ pub enum Scroll
 
 pub enum Event
 {
-    Key { key: KeyCode, state: ElementState },
-    Click { button: MouseButton, state: ElementState },
+    Key { key: KeyCode, pressed: bool },
+    Click { button: MouseButton, pressed: bool },
     Cursor { position: (f32, f32) },
     Scroll(Scroll),
     Touch { position: (f32, f32), phase: TouchPhase, finger: u64 },

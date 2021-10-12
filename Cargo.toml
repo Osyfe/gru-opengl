@@ -26,13 +26,13 @@ winit = { version = "0.25.0", default-features = false }
 # web
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 winit = { version = "0.25.0", default-features = false, features = ["web-sys"] }
-js-sys = "0.3.50"
-wasm-bindgen = "0.2.73"
-web-sys = { version = "0.3.4", features = ["Window", "Document", "Element", "HtmlCanvasElement", "WebGlRenderingContext", "WebGlBuffer", "WebGlShader", "WebGlProgram", "Performance", "XmlHttpRequest", "XmlHttpRequestResponseType", "Storage"] }
+js-sys = "0.3.55"
+wasm-bindgen = "0.2.78"
+web-sys = { version = "0.3.55", features = ["Window", "Document", "Element", "HtmlCanvasElement", "WebGlRenderingContext", "WebGlBuffer", "WebGlShader", "WebGlProgram", "Performance", "XmlHttpRequest", "XmlHttpRequestResponseType", "Storage"] }
 
 # android
 [target.'cfg(target_os = "android")'.dependencies]
 raw-window-handle = "0.3.3"
-ndk-glue = "0.3.0"
+ndk-glue = "0.3.0" #0.4 out, but winit uses 0.3
 khronos-egl = { version = "4.1.0", features = ["dynamic"] }
 libloading = "0.7.0"

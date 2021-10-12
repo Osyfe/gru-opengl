@@ -1,3 +1,5 @@
+use crate::DEBUG;
+
 use super::*;
 
 impl Gl
@@ -6,6 +8,8 @@ impl Gl
 	{
 		let gl = &self.raw;
 		let program = unsafe { gl.create_program() }.unwrap();
+		let id = self.shader_id;
+		self.shader_id += 1;
 		//shader
 		let vertex_shader = unsafe
 		{
@@ -39,6 +43,7 @@ impl Gl
 			gl.attach_shader(program, shader);
 			shader
 		};
+		let mut attributes = HashSet::new();
 		let mut uniforms = HashMap::new();
 		unsafe
 		{
@@ -55,7 +60,11 @@ impl Gl
 			for i in 0..len
 			{
 				let attribute = gl.get_active_attribute(program, i).unwrap();
-				Self::attribute_location(&mut self.attributes, &attribute.name, &mut |name, location| gl.bind_attrib_location(program, location, name));
+				Self::attribute_location(&mut self.attributes, &attribute.name, &mut |name, location|
+				{
+					attributes.insert(name.to_string());
+					gl.bind_attrib_location(program, location, name);
+				});
 			}
 			//2. link
 			gl.link_program(program);
@@ -76,15 +85,37 @@ impl Gl
 			{
 				let uniform = gl.get_active_uniform(program, i).unwrap();
 				let location = gl.get_uniform_location(program, &uniform.name).unwrap();
-				uniforms.insert(uniform.name, UniformKey(location));
+				uniforms.insert(uniform.name, UniformKey { key: location, shader_id: id });
 			}
 		}
-        Shader { gl: gl.clone(), program, uniforms }
+        Shader { gl: gl.clone(), program, attributes, uniforms, id }
 	}
 }
 
 impl Shader
 {
+	pub fn check_attributes<T: AttributesReprCpacked>(&self)
+	{
+		if DEBUG
+		{
+			if T::ATTRIBUTES.len() != self.attributes.len()
+			{
+				let msg = "Wrong number of attributes.";
+				log(msg);
+				panic!("{}", msg);
+			}
+			for (_, name) in T::ATTRIBUTES
+			{
+				if !self.attributes.contains(*name)
+				{
+					let msg = format!("The Shader has no attribute \"{}\"", name);
+					log(&msg);
+					panic!("{}", msg);
+				}
+			}
+		}
+	}
+
 	pub fn get_key(&self, name: &str) -> Option<&UniformKey>
 	{
 		self.uniforms.get(name)

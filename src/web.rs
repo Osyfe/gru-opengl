@@ -12,7 +12,7 @@ pub(crate) struct Stuff;
 
 impl Stuff
 {
-    pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, fs::Storage, &'static str,  &'static str)
+    pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
     {
         use winit::platform::web::WindowBuilderExtWebSys;
         use wasm_bindgen::JsCast;
@@ -92,7 +92,7 @@ pub mod fs
     {
         pub(crate) fn load() -> Self
         {
-            web_sys::window().unwrap().local_storage().unwrap().unwrap()
+            Self { storage: web_sys::window().unwrap().local_storage().unwrap().unwrap() }
         }
 
         pub fn set(&mut self, key: &str, value: Option<&str>)
