@@ -1,9 +1,8 @@
 use super::log;
 use gru_misc::math::*;
 use glow::{Context, HasContext};
-use std::marker::PhantomData;
-use std::rc::Rc;
-use std::collections::{HashMap, HashSet};
+use std::{rc::Rc, marker::PhantomData};
+use std::collections::HashMap;
 
 mod drops;
 mod buffer;
@@ -103,9 +102,8 @@ pub struct VertexBuffer<T: AttributesReprCpacked>
 {
 	gl: Rc<Context>,
 	buffer: <Context as HasContext>::Buffer,
-	_phantom: PhantomData<T>,
 	length: u32,
-	attributes: Vec<(BufferType, u32, i32)>
+	_phantom: PhantomData<T>
 }
 //u16 indices
 pub struct IndexBuffer
@@ -122,13 +120,14 @@ pub struct Texture
 	size: u32
 }
 
-pub struct Shader
+pub struct Shader<T: AttributesReprCpacked>
 {
 	gl: Rc<Context>,
+	id: u32,
 	program: <Context as HasContext>::Program,
-	attributes: HashSet<String>,
 	uniforms: HashMap<String, UniformKey>,
-	id: u32
+	attributes: Vec<(BufferType, u32, i32)>,
+	_phantom: PhantomData<T>
 }
 
 pub struct Framebuffer

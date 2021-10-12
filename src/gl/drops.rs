@@ -24,7 +24,7 @@ impl Drop for Texture
 	}
 }
 
-impl Drop for Shader
+impl<T: AttributesReprCpacked> Drop for Shader<T>
 {
 	fn drop(&mut self)
 	{

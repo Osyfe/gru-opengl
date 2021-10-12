@@ -1,10 +1,8 @@
-use crate::DEBUG;
-
 use super::*;
 
 impl Gl
 {
-	pub fn new_shader(&mut self, vertex_glsl: &str, fragment_glsl: &str) -> Shader
+	pub fn new_shader<T: AttributesReprCpacked>(&mut self, vertex_glsl: &str, fragment_glsl: &str) -> Shader<T>
 	{
 		let gl = &self.raw;
 		let program = unsafe { gl.create_program() }.unwrap();
@@ -43,7 +41,7 @@ impl Gl
 			gl.attach_shader(program, shader);
 			shader
 		};
-		let mut attributes = HashSet::new();
+		let mut attributes = Vec::new();
 		let mut uniforms = HashMap::new();
 		unsafe
 		{
@@ -62,9 +60,25 @@ impl Gl
 				let attribute = gl.get_active_attribute(program, i).unwrap();
 				Self::attribute_location(&mut self.attributes, &attribute.name, &mut |name, location|
 				{
-					attributes.insert(name.to_string());
+					attributes.push(name.to_string());
 					gl.bind_attrib_location(program, location, name);
 				});
+			}
+			//validate attributes
+			if T::ATTRIBUTES.len() != attributes.len()
+			{
+				let msg = "Wrong number of attributes.";
+				log(msg);
+				panic!("{}", msg);
+			}
+			for (_, name) in T::ATTRIBUTES
+			{
+				if !attributes.iter().any(|attr| attr == name)
+				{
+					let msg = format!("The Shader is missing attribute \"{}\"", name);
+					log(&msg);
+					panic!("{}", msg);
+				}
 			}
 			//2. link
 			gl.link_program(program);
@@ -88,34 +102,26 @@ impl Gl
 				uniforms.insert(uniform.name, UniformKey { key: location, shader_id: id });
 			}
 		}
-        Shader { gl: gl.clone(), program, attributes, uniforms, id }
+		//transform attributes
+		let mut attributes = Vec::with_capacity(T::ATTRIBUTES.len());
+		let mut size_of_t = 0;
+		for (ty, name) in T::ATTRIBUTES
+		{
+			let mut location = 0;
+			Self::attribute_location(&mut self.attributes, name, &mut |_, loc| location = loc);
+			attributes.push((*ty, location, size_of_t as i32));
+			size_of_t += (match ty
+			{
+				BufferType::Float { size } => *size,
+				BufferType::Int { size, .. } => *size
+			}) as usize * 4;
+		}
+        Shader { gl: gl.clone(), id, program, uniforms, attributes, _phantom: PhantomData }
 	}
 }
 
-impl Shader
+impl<T: AttributesReprCpacked> Shader<T>
 {
-	pub fn check_attributes<T: AttributesReprCpacked>(&self)
-	{
-		if DEBUG
-		{
-			if T::ATTRIBUTES.len() != self.attributes.len()
-			{
-				let msg = "Wrong number of attributes.";
-				log(msg);
-				panic!("{}", msg);
-			}
-			for (_, name) in T::ATTRIBUTES
-			{
-				if !self.attributes.contains(*name)
-				{
-					let msg = format!("The Shader has no attribute \"{}\"", name);
-					log(&msg);
-					panic!("{}", msg);
-				}
-			}
-		}
-	}
-
 	pub fn get_key(&self, name: &str) -> Option<&UniformKey>
 	{
 		self.uniforms.get(name)

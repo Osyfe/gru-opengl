@@ -44,10 +44,10 @@ pub struct PipelineInfo
 	pub face_cull: bool
 }
 
-pub struct Pipeline<'a, 'b>
+pub struct Pipeline<'a, 'b, T: AttributesReprCpacked>
 {
 	gl: &'a mut Gl,
-	shader: &'b Shader,
+	shader: &'b Shader<T>,
 	texture_active: u8,
 	texture_lock: u8,
 	texture_used: bool
@@ -112,7 +112,7 @@ impl Gl
 impl<'a, 'b> RenderPass<'a, 'b>
 {
 	#[inline]
-	pub fn pipeline<'c, 'd>(&'c mut self, shader: &'d Shader, info: PipelineInfo) -> Pipeline<'c, 'd>
+	pub fn pipeline<'c, 'd, T: AttributesReprCpacked>(&'c mut self, shader: &'d Shader<T>, info: PipelineInfo) -> Pipeline<'c, 'd, T>
 	{
 		let gl = &self.gl.raw;
 		gl_able!(gl, info, self.gl.pipeline, depth_test, DEPTH_TEST);
@@ -123,15 +123,15 @@ impl<'a, 'b> RenderPass<'a, 'b>
 	}
 }
 
-impl<'a, 'b> Pipeline<'a, 'b>
+impl<'a, 'b, T: AttributesReprCpacked> Pipeline<'a, 'b, T>
 {
-	pub fn shader(&self) -> &Shader
+	pub fn shader(&self) -> &Shader<T>
 	{
 		&self.shader
 	}
 
 	#[inline(always)]
-	fn check_key(shader: &Shader, key: &UniformKey)
+	fn check_key(shader: &Shader<T>, key: &UniformKey)
 	{
 		if DEBUG && shader.id != key.shader_id
 		{
@@ -282,14 +282,14 @@ impl<'a, 'b> Pipeline<'a, 'b>
 	}
 
 	#[inline]
-	pub fn draw<T: AttributesReprCpacked>(&mut self, primitives: Primitives, vertices: &VertexBuffer<T>, indices: Option<&IndexBuffer>, offset: u32, count: u32)
+	pub fn draw(&mut self, primitives: Primitives, vertices: &VertexBuffer<T>, indices: Option<&IndexBuffer>, offset: u32, count: u32)
 	{
 		let gl = &self.gl.raw;
 		unsafe
 		{
 			gl.bind_buffer(glow::ARRAY_BUFFER, Some(vertices.buffer));
 
-			for (ty, location, offset) in &vertices.attributes
+			for (ty, location, offset) in &self.shader.attributes
 			{
 				match ty
 				{
@@ -315,14 +315,14 @@ impl<'a, 'b> Pipeline<'a, 'b>
 				}
 			}
 			
-			for (_, location, _) in &vertices.attributes { gl.disable_vertex_attrib_array(*location); }
+			for (_, location, _) in &self.shader.attributes { gl.disable_vertex_attrib_array(*location); }
 
 			gl.bind_buffer(glow::ARRAY_BUFFER, None);
 		}
 	}
 }
 
-impl Drop for Pipeline<'_, '_>
+impl<T: AttributesReprCpacked> Drop for Pipeline<'_, '_, T>
 {
 	#[inline]
 	fn drop(&mut self)

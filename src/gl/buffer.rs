@@ -13,21 +13,13 @@ impl Gl
 			gl.bind_buffer(glow::ARRAY_BUFFER, None);
 			buffer
 		};
-		let mut attributes = Vec::with_capacity(T::ATTRIBUTES.len());
-		let mut size_of_t = 0;
-		for (ty, name) in T::ATTRIBUTES
+		let size_of_t: usize = T::ATTRIBUTES.iter().map(|(ty, _)| match ty
 		{
-			let mut location = 0;
-			Self::attribute_location(&mut self.attributes, name, &mut |_, loc| location = loc);
-			attributes.push((*ty, location, size_of_t as i32));
-			size_of_t += (match ty
-			{
-				BufferType::Float { size } => *size,
-				BufferType::Int { size, .. } => *size
-			}) as usize * 4;
-		}
-		if size_of_t != std::mem::size_of::<T>() { panic!("Gl::new_vertex_buffer: Wrong attribute trait implementation."); }
-		VertexBuffer { gl: gl.clone(), buffer, _phantom: PhantomData, length, attributes }
+			BufferType::Float { size } => *size as usize * 4,
+			BufferType::Int { size, .. } => *size as usize * 4
+		}).sum();
+		if size_of_t != std::mem::size_of::<T>() { panic!("Gl::new_vertex_buffer: Wrong attribute trait implementation (the struct size does not match)."); }
+		VertexBuffer { gl: gl.clone(), buffer, length, _phantom: PhantomData }
 	}
 
 	pub fn new_index_buffer(&mut self, length: u32, access: BufferAccess) -> IndexBuffer
