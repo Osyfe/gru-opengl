@@ -11,6 +11,7 @@ fs = []
 [dependencies]
 glow = "0.11.0"
 gru-misc = { path = "../gru-misc", features = ["math"] }
+ahash = {version = "0.7.5", features = ["serde"] }
 
 # desktop
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]

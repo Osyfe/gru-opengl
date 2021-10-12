@@ -64,7 +64,7 @@ pub mod fs
 {
     use std::io::{BufReader, BufWriter, prelude::*};
     use std::sync::mpsc::{channel, Receiver};
-    use std::collections::HashMap;
+    use ahash::AHashMap;
 
     pub(crate) struct File
     {
@@ -106,7 +106,7 @@ pub mod fs
 
     pub struct Storage
     {
-        map: HashMap<String, String>
+        map: AHashMap<String, String>
     }
 
     impl Storage
@@ -123,7 +123,7 @@ pub mod fs
                     BufReader::new(file).read_to_end(&mut contents).unwrap();
                     bincode::deserialize(&contents).unwrap()
                 },
-                Err(_) => HashMap::new()
+                Err(_) => AHashMap::new()
             };
             Self { map }
         }

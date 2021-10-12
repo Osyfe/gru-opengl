@@ -42,7 +42,7 @@ impl Gl
 			shader
 		};
 		let mut attributes = Vec::new();
-		let mut uniforms = HashMap::new();
+		let mut uniforms = AHashMap::new();
 		unsafe
 		{
 			//1. link

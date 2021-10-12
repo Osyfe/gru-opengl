@@ -2,7 +2,7 @@ use super::log;
 use gru_misc::math::*;
 use glow::{Context, HasContext};
 use std::{rc::Rc, marker::PhantomData};
-use std::collections::HashMap;
+use ahash::AHashMap;
 
 mod drops;
 mod buffer;
@@ -25,7 +25,7 @@ pub struct Gl
 	shader_id: u32,
 	viewport: (i32, i32),
 	clear_color: (f32, f32, f32),
-	attributes: HashMap<String, u32>,
+	attributes: AHashMap<String, u32>,
 	pipeline: PipelineInfo
 }
 
@@ -42,7 +42,7 @@ impl Gl
 			shader_id: 0,
 			viewport: (-1, -1),
 			clear_color: (0.0, 0.0, 0.0),
-			attributes: HashMap::new(),
+			attributes: AHashMap::new(),
 			pipeline: PipelineInfo
 			{
 				depth_test: true,
@@ -82,7 +82,7 @@ impl Gl
 		self
 	}
 
-	fn attribute_location(attributes: &mut HashMap<String, u32>, name: &str, action: &mut dyn FnMut(&str, u32))
+	fn attribute_location(attributes: &mut AHashMap<String, u32>, name: &str, action: &mut dyn FnMut(&str, u32))
 	{
 		use std::collections::hash_map::Entry;
 		let new_location = attributes.len() as u32;
@@ -125,7 +125,7 @@ pub struct Shader<T: AttributesReprCpacked>
 	gl: Rc<Context>,
 	id: u32,
 	program: <Context as HasContext>::Program,
-	uniforms: HashMap<String, UniformKey>,
+	uniforms: AHashMap<String, UniformKey>,
 	attributes: Vec<(BufferType, u32, i32)>,
 	_phantom: PhantomData<T>
 }
