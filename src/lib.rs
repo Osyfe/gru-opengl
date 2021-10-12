@@ -31,7 +31,7 @@ pub fn start<T: App>()
     #[cfg(feature = "fs")]
     let mut ctx = Context { window, window_dims, gl, storage: fs::Storage::load(), files: Vec::new() };
     #[cfg(not(feature = "fs"))]
-    let mut ctx = Context { window, dims, gl };
+    let mut ctx = Context { window, window_dims, gl };
     let mut app = None;
 
     let mut then = time::now();
