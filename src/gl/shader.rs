@@ -69,7 +69,7 @@ impl Gl
 			{
 				let msg = "Wrong number of attributes.";
 				log(msg);
-				panic!("{}", msg);
+				//panic!("{}", msg);
 			}
 			for (_, name) in T::ATTRIBUTES
 			{
@@ -77,7 +77,7 @@ impl Gl
 				{
 					let msg = format!("The Shader is missing attribute \"{}\"", name);
 					log(&msg);
-					panic!("{}", msg);
+					//panic!("{}", msg);
 				}
 			}
 			//2. link

@@ -162,26 +162,31 @@ impl Context
 
 impl Context
 {
+    #[inline]
     pub fn set_title(&mut self, title: &str)
     {
         self.window.set_title(title);
     }
 
+    #[inline]
     pub fn window_dims(&self) -> (u32, u32)
     {
         self.window_dims
     }
 
+    #[inline]
     pub fn set_window_dims(&mut self, (width, height): (u32, u32))
     {
         self.window.set_inner_size(PhysicalSize { width, height });
     }
 
+    #[inline]
     pub fn fullscreen(&self) -> bool
     {
         self.window.fullscreen().is_some()
     }
 
+    #[inline]
     pub fn set_fullscreen(&mut self, open: bool)
     {
         let fullscreen = if open { Some(Fullscreen::Borderless(None)) } else { None };
