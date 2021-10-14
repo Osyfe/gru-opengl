@@ -16,7 +16,7 @@ impl Drop for IndexBuffer
 	}
 }
 
-impl Drop for Texture
+impl<const P: bool> Drop for Texture<P>
 {
 	fn drop(&mut self)
 	{

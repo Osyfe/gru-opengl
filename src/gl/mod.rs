@@ -113,7 +113,7 @@ pub struct IndexBuffer
 	length: u32
 }
 
-pub struct Texture
+pub struct Texture<const P: bool>
 {
 	gl: Rc<Context>,
 	texture: <Context as HasContext>::Texture,
@@ -125,7 +125,7 @@ pub struct Shader<T: AttributesReprCpacked>
 	gl: Rc<Context>,
 	id: u32,
 	program: <Context as HasContext>::Program,
-	uniforms: AHashMap<String, UniformKey>,
+	uniforms: AHashMap<String, (<Context as HasContext>::UniformLocation, u32)>, //(shader name, opengl location, glow type)
 	attributes: Vec<(BufferType, u32, i32)>,
 	_phantom: PhantomData<T>
 }
@@ -134,9 +134,35 @@ pub struct Framebuffer
 {
 	gl: Rc<Context>,
 	framebuffer: <Context as HasContext>::Framebuffer,
-	color: Texture,
+	color: Texture<true>,
 	depth: Option<<Context as HasContext>::Renderbuffer>
 }
 
 #[derive(Clone)]
-pub struct UniformKey { key: <Context as HasContext>::UniformLocation, shader_id: u32 }
+pub struct UniformKey<U: shader::UniformType>
+{
+	key: <Context as HasContext>::UniformLocation,
+	shader_id: u32,
+	_phatom: PhantomData<U>
+}
+
+pub enum RenderTarget<'a>
+{
+	Screen,
+	Texture(&'a mut Framebuffer)
+}
+
+pub struct RenderPass<'a, 'b>
+{
+	gl: &'a mut Gl,
+	render_target: RenderTarget<'b>
+}
+
+pub struct Pipeline<'a, 'b, T: AttributesReprCpacked>
+{
+	gl: &'a mut Gl,
+	shader: &'b Shader<T>,
+	texture_active: u8,
+	texture_lock: u8,
+	texture_used: bool
+}

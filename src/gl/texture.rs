@@ -2,7 +2,7 @@ use super::*;
 
 impl Gl
 {
-	pub fn new_texture(&mut self, TextureConfig { size, channel, mipmap, wrap }: &TextureConfig, data: &[u8]) -> Texture
+	pub fn new_texture<const P: bool>(&mut self, TextureConfig { size, channel, mipmap, wrap }: &TextureConfig, data: &[u8]) -> Texture<P>
 	{
 		if size & (size - 1) != 0 { panic!("Gl::new_texture: Size is not a power of 2."); }
 		if size.pow(2) * channel.bytes() != data.len() as u32 { panic!("Gl::new_texture: Data has the wrong length."); }
@@ -85,7 +85,7 @@ pub struct TextureConfig
 	pub wrap: TextureWrap
 }
 
-impl Texture
+impl<const P: bool> Texture<P>
 {
 	pub fn size(&self) -> u32
 	{

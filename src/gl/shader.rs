@@ -97,7 +97,7 @@ impl Gl
 			{
 				let uniform = gl.get_active_uniform(program, i).unwrap();
 				let location = gl.get_uniform_location(program, &uniform.name).unwrap();
-				uniforms.insert(uniform.name, UniformKey { key: location, shader_id: id });
+				uniforms.insert(uniform.name, (location, uniform.utype));
 			}
 		}
 		//transform attributes
@@ -120,8 +120,123 @@ impl Gl
 
 impl<T: AttributesReprCpacked> Shader<T>
 {
-	pub fn get_key(&self, name: &str) -> Option<&UniformKey>
+	pub fn get_key<U: UniformType>(&self, name: &str) -> UniformKey<U>
 	{
-		self.uniforms.get(name)
+		let (location, utype) = self.uniforms.get(name).expect(&format!("The uniform \"{}\" does not exist.", name));
+		if *utype != U::CODE { panic!("The uniform \"{}\" has the wrong type.", name); }
+		UniformKey { key: location.clone(), shader_id: self.id, _phatom: PhantomData }
+	}
+}
+
+pub unsafe trait UniformType: Sized
+{
+	const CODE: u32;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>);
+}
+
+unsafe impl UniformType for f32
+{
+	const CODE: u32 = glow::FLOAT;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_1_f32(Some(&key.key), *self); }
+}
+
+unsafe impl UniformType for Vec2
+{
+	const CODE: u32 = glow::FLOAT_VEC2;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_2_f32(Some(&key.key), self.0, self.1); }
+}
+
+unsafe impl UniformType for Vec3
+{
+	const CODE: u32 = glow::FLOAT_VEC3;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_3_f32(Some(&key.key), self.0, self.1, self.2); }
+}
+
+unsafe impl UniformType for Vec4
+{
+	const CODE: u32 = glow::FLOAT_VEC4;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_4_f32(Some(&key.key), self.0, self.1, self.2, self.3); }
+}
+
+unsafe impl UniformType for i32
+{
+	const CODE: u32 = glow::INT;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_1_i32(Some(&key.key), *self); }
+}
+
+unsafe impl UniformType for (i32, i32)
+{
+	const CODE: u32 = glow::INT_VEC2;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_2_i32(Some(&key.key), self.0, self.1); }
+}
+
+unsafe impl UniformType for (i32, i32, i32)
+{
+	const CODE: u32 = glow::INT_VEC3;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_3_i32(Some(&key.key), self.0, self.1, self.2); }
+}
+
+unsafe impl UniformType for (i32, i32, i32, i32)
+{
+	const CODE: u32 = glow::INT_VEC4;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_4_i32(Some(&key.key), self.0, self.1, self.2, self.3); }
+}
+
+unsafe impl UniformType for u32
+{
+	const CODE: u32 = glow::UNSIGNED_INT;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_1_u32(Some(&key.key), *self); }
+}
+
+unsafe impl UniformType for (u32, u32)
+{
+	const CODE: u32 = glow::UNSIGNED_INT_VEC2;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_2_u32(Some(&key.key), self.0, self.1); }
+}
+
+unsafe impl UniformType for (u32, u32, u32)
+{
+	const CODE: u32 = glow::UNSIGNED_INT_VEC3;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_3_u32(Some(&key.key), self.0, self.1, self.2); }
+}
+
+unsafe impl UniformType for (u32, u32, u32, u32)
+{
+	const CODE: u32 = glow::UNSIGNED_INT_VEC4;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_4_u32(Some(&key.key), self.0, self.1, self.2, self.3); }
+}
+
+unsafe impl UniformType for Mat2
+{
+	const CODE: u32 = glow::FLOAT_MAT2;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_matrix_2_f32_slice(Some(&key.key), false, &self.to_array()); }
+}
+
+unsafe impl UniformType for Mat3
+{
+	const CODE: u32 = glow::FLOAT_MAT3;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_matrix_3_f32_slice(Some(&key.key), false, &self.to_array()); }
+}
+
+unsafe impl UniformType for Mat4
+{
+	const CODE: u32 = glow::FLOAT_MAT4;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>) { pipeline.gl.raw.uniform_matrix_4_f32_slice(Some(&key.key), false, &self.to_array()); }
+}
+
+unsafe impl<const P: bool> UniformType for Texture<P>
+{
+	const CODE: u32 = glow::SAMPLER_2D;
+	unsafe fn set<T: AttributesReprCpacked>(&self, pipeline: &mut Pipeline<T>, key: &UniformKey<Self>)
+	{
+		if let Some(id) = (0..8).map(|id| (id + pipeline.texture_active) % 8).filter(|id| pipeline.texture_lock & (1 << id) == 0).next()
+		{
+			pipeline.gl.raw.uniform_1_i32(Some(&key.key), id as i32);
+			pipeline.gl.raw.active_texture(glow::TEXTURE0 + id as u32);
+			pipeline.gl.raw.bind_texture(glow::TEXTURE_2D, Some(self.texture));
+			pipeline.texture_active = (id + 1) % 8;
+			if P { pipeline.texture_lock |= 1 << id; }
+		}
+		pipeline.texture_used = true;
 	}
 }

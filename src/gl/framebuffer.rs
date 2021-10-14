@@ -55,7 +55,7 @@ impl Framebuffer
 	}
 	
 	#[inline]
-	pub fn texture(&self) -> &Texture
+	pub fn texture(&self) -> &Texture<true>
 	{
 		&self.color
 	}
