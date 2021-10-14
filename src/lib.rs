@@ -1,5 +1,4 @@
-use winit::
-{dpi::PhysicalSize, event::{ElementState, Event as RawEvent, KeyboardInput, MouseScrollDelta, Touch, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder, Fullscreen}};
+use winit::{dpi::PhysicalSize, event::{ElementState, Event as RawEvent, KeyboardInput, MouseScrollDelta, Touch, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder, Fullscreen}};
 
 pub const DEBUG: bool = cfg!(debug_assertions);
 

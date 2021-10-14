@@ -104,13 +104,16 @@ impl<'a, 'b> RenderPass<'a, 'b>
 
 impl<'a, 'b, T: AttributesReprCpacked> Pipeline<'a, 'b, T>
 {
-	pub fn get_key<U: UniformType>(&self, name: &str) -> UniformKey<U>
+	#[inline]
+	pub fn uniform_name<U: UniformType>(&mut self, name: &str, value: &U) -> &mut Self
 	{
-		self.shader.get_key(name)
+		let key = self.shader.get_key(name);
+		unsafe { value.set(self, &key); }
+		self
 	}
 
 	#[inline]
-	pub fn uniform<U: UniformType>(&mut self, key: &UniformKey<U>, value: &U) -> &mut Self
+	pub fn uniform_key<U: UniformType>(&mut self, key: &UniformKey<U>, value: &U) -> &mut Self
 	{
 		if DEBUG && self.shader.id != key.shader_id
 		{

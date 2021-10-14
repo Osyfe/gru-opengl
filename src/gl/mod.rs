@@ -1,5 +1,4 @@
 use super::log;
-use gru_misc::math::*;
 use glow::{Context, HasContext};
 use std::{rc::Rc, marker::PhantomData};
 use ahash::AHashMap;
@@ -126,7 +125,7 @@ pub struct Shader<T: AttributesReprCpacked>
 	id: u32,
 	program: <Context as HasContext>::Program,
 	uniforms: AHashMap<String, (<Context as HasContext>::UniformLocation, u32)>, //(shader name, opengl location, glow type)
-	attributes: Vec<(BufferType, u32, i32)>,
+	attributes: Vec<(BufferType, u32, i32)>, //(gru type, location, offset)
 	_phantom: PhantomData<T>
 }
 
@@ -138,7 +137,6 @@ pub struct Framebuffer
 	depth: Option<<Context as HasContext>::Renderbuffer>
 }
 
-#[derive(Clone)]
 pub struct UniformKey<U: shader::UniformType>
 {
 	key: <Context as HasContext>::UniformLocation,

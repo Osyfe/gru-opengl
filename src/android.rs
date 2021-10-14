@@ -46,14 +46,17 @@ impl Stuff
         ];
         let context = instance.create_context(display, config, None, &context_attributes).unwrap();
         //gl
-        let gl = unsafe { glow::Context::from_loader_function(|symbol|
+        let gl = unsafe
         {
-            match instance.get_proc_address(symbol)
+            glow::Context::from_loader_function(|symbol|
             {
-                Some(addr) => addr as *const _,
-                None => std::ptr::null()
-            }
-        }) };
+                match instance.get_proc_address(symbol)
+                {
+                    Some(addr) => addr as *const _,
+                    None => std::ptr::null()
+                }
+            })
+        };
         (window, Self { instance, display, config, context, surface: None }, gl, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
     }
 
