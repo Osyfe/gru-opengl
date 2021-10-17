@@ -53,14 +53,14 @@ impl BufferType
 			Self::Float { size: 2 } => glow::FLOAT_VEC2,
 			Self::Float { size: 3 } => glow::FLOAT_VEC3,
 			Self::Float { size: 4 } => glow::FLOAT_VEC4,
-			Self::Int { signed: false, size: 1 } => glow::INT,
-			Self::Int { signed: false, size: 2 } => glow::INT_VEC2,
-			Self::Int { signed: false, size: 3 } => glow::INT_VEC3,
-			Self::Int { signed: false, size: 4 } => glow::INT_VEC4,
-			Self::Int { signed: true, size: 1 } => glow::UNSIGNED_INT,
-			Self::Int { signed: true, size: 2 } => glow::UNSIGNED_INT_VEC2,
-			Self::Int { signed: true, size: 3 } => glow::UNSIGNED_INT_VEC3,
-			Self::Int { signed: true, size: 4 } => glow::UNSIGNED_INT_VEC4,
+			Self::Int { signed: true, size: 1 } => glow::INT,
+			Self::Int { signed: true, size: 2 } => glow::INT_VEC2,
+			Self::Int { signed: true, size: 3 } => glow::INT_VEC3,
+			Self::Int { signed: true, size: 4 } => glow::INT_VEC4,
+			Self::Int { signed: false, size: 1 } => glow::UNSIGNED_INT,
+			Self::Int { signed: false, size: 2 } => glow::UNSIGNED_INT_VEC2,
+			Self::Int { signed: false, size: 3 } => glow::UNSIGNED_INT_VEC3,
+			Self::Int { signed: false, size: 4 } => glow::UNSIGNED_INT_VEC4,
 			_ => panic!("Invalid BufferType.")
 		}
 	}
