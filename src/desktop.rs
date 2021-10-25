@@ -15,6 +15,7 @@ impl Stuff
 {
     pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
     {
+        #[allow(unused_mut)]
         let mut builder = WindowBuilder::new();
         #[cfg(target_os = "windows")]
         {

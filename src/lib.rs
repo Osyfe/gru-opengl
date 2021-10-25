@@ -21,7 +21,7 @@ pub mod event;
 use event::*;
 pub mod gl;
 
-pub fn start<T: App>()
+pub fn start<T: App>(init: T::Init)
 {
     let event_loop = EventLoop::new();
     let (window, mut stuff, gl, glsl_vertex_header, glsl_fragment_header) = Stuff::new(&event_loop);
@@ -32,6 +32,7 @@ pub fn start<T: App>()
     #[cfg(not(feature = "fs"))]
     let mut ctx = Context { window, window_dims, gl };
     let mut app = None;
+    let mut init = Some(init);
 
     let mut then = time::now();
 
@@ -44,7 +45,7 @@ pub fn start<T: App>()
             {
                 stuff.init(&ctx.window);
                 ctx.gl.init();
-                app = Some(T::init(&mut ctx));
+                app = Some(T::init(&mut ctx, init.take().unwrap()));
             },
             #[cfg(target_os = "android")]
             RawEvent::Resumed =>
@@ -53,14 +54,14 @@ pub fn start<T: App>()
                 if app.is_none()
                 {
                     ctx.gl.init();
-                    app = Some(T::init(&mut ctx));
+                    app = Some(T::init(&mut ctx, init.take().unwrap()));
                 }
                 then = time::now();
             },
             RawEvent::LoopDestroyed | RawEvent::Suspended =>
             {
                 stuff.deinit();
-                if let Some(app) = app.take() { app.deinit(&mut ctx); }
+                if let Some(app) = app.take() { init = Some(app.deinit(&mut ctx)); }
             },
             RawEvent::WindowEvent { event: WindowEvent::Resized(PhysicalSize { width, height }), .. } =>
             {
@@ -195,8 +196,9 @@ impl Context
 
 pub trait App: 'static
 {
-    fn init(ctx: &mut Context) -> Self;
+    type Init: 'static;
+    fn init(ctx: &mut Context, init: Self::Init) -> Self;
     fn input(&mut self, ctx: &mut Context, event: Event);
     fn frame(&mut self, ctx: &mut Context, dt: f32) -> bool;
-    fn deinit(self, ctx: &mut Context);
+    fn deinit(self, ctx: &mut Context) -> Self::Init;
 }
