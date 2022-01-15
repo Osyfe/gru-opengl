@@ -46,24 +46,26 @@ pub mod fs
 {
     use web_sys::{XmlHttpRequest, XmlHttpRequestResponseType};
     use js_sys::Uint8Array;
+    use crate::event::File as EventFile;
 
     pub(crate) struct File
     {
         name: String,
+        key: u64,
         request: XmlHttpRequest,
         data: Option<Vec<u8>>
     }
 
     impl File
     {
-        pub(crate) fn load(name: &str) -> Self
+        pub(crate) fn load(name: &str, key: u64) -> Self
         {
             let name = name.to_string();
             let request = XmlHttpRequest::new().unwrap();
             request.open_with_async("GET", &format!("data/{}", name), true).unwrap();
             request.set_response_type(XmlHttpRequestResponseType::Arraybuffer);
             request.send().unwrap();
-            Self { name, request, data: None }
+            Self { name, key, request, data: None }
         }
 
         pub(crate) fn finished(&mut self) -> bool
@@ -76,10 +78,11 @@ pub mod fs
             } else { false }
         }
 
-        pub(crate) fn get(self) -> Option<(String, Vec<u8>)>
+        pub(crate) fn get(self) -> Option<EventFile>
         {
-            let name = self.name;
-            self.data.map(|vec| (name, vec))
+            let path = self.name;
+            let key = self.key;
+            self.data.map(|data| EventFile { path, key, data })
         }
     }
 
