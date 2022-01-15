@@ -104,9 +104,9 @@ pub fn start<T: App>(init: T::Init)
                 let app = app.as_mut().unwrap();
 
                 #[cfg(feature = "fs")]
-                for (name, data) in ctx.check_files().into_iter()
+                for file in ctx.check_files().into_iter()
                 {
-                    app.input(&mut ctx, Event::File(name, data));
+                    app.input(&mut ctx, Event::File(file));
                 }
 
                 let now = time::now();
@@ -137,12 +137,12 @@ pub struct Context
 #[cfg(feature = "fs")]
 impl Context
 {
-    pub fn load_file(&mut self, name: &str)
+    pub fn load_file(&mut self, name: &str, key: u64)
     {
-        self.files.push(fs::File::load(name));
+        self.files.push(fs::File::load(name, key));
     }
 
-    fn check_files(&mut self) -> Vec<(String, Vec<u8>)>
+    fn check_files(&mut self) -> Vec<File>
     {
         if self.files.len() == 0 { return Vec::new(); }
         let mut finished = Vec::new();

@@ -66,16 +66,17 @@ pub mod fs
     use std::io::{BufReader, BufWriter, prelude::*};
     use std::sync::mpsc::{channel, Receiver};
     use ahash::AHashMap;
+    use crate::event::File as EventFile;
 
     pub(crate) struct File
     {
-        receiver: Receiver<(String, Vec<u8>)>,
-        data: Option<(String, Vec<u8>)>
+        receiver: Receiver<EventFile>,
+        data: Option<EventFile>
     }
 
     impl File
     {
-        pub(crate) fn load(name: &str) -> Self
+        pub(crate) fn load(name: &str, key: u64) -> Self
         {
             let full_name = if cfg!(debug_assertions) { format!("export/data/{}", name) } else { format!("data/{}", name) };
             let name = name.to_string();
@@ -84,7 +85,7 @@ pub mod fs
             {
                 let mut contents = Vec::new();
                 BufReader::new(std::fs::File::open(&full_name).unwrap()).read_to_end(&mut contents).unwrap();
-                sender.send((name, contents)).unwrap();
+                sender.send(EventFile { path: name, key, data: contents }).unwrap();
             });
             Self { receiver, data: None } 
         }
@@ -99,7 +100,7 @@ pub mod fs
             }
         }
 
-        pub(crate) fn get(self) -> Option<(String, Vec<u8>)>
+        pub(crate) fn get(self) -> Option<EventFile>
         {
             self.data
         }
