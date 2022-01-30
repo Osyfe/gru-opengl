@@ -61,7 +61,7 @@ pub mod time
 }
 
 #[cfg(feature = "fs")]
-pub mod fs
+pub(crate) mod fs
 {
     use std::io::{BufReader, BufWriter, prelude::*};
     use std::sync::mpsc::{channel, Receiver, TryRecvError};

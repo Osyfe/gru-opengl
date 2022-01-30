@@ -165,18 +165,11 @@ pub struct Context
 #[cfg(feature = "fs")]
 impl Context
 {
-    pub fn gl(&mut self) -> &mut gl::Gl
-    {
-        &mut self.gl
-    }
-
-    #[cfg(feature = "fs")]
-    pub fn set(&mut self, key: &str, value: Option<&str>)
+    pub fn set_storage(&mut self, key: &str, value: Option<&str>)
     {
         self.storage.set(key, value);
     }
 
-    #[cfg(feature = "fs")]
     pub fn get_storage(&self, key: &str) -> Option<String>
     {
         self.storage.get(key)
@@ -207,6 +200,12 @@ impl Context
 
 impl Context
 {
+	#[inline]
+	pub fn gl(&mut self) -> &mut gl::Gl
+    {
+        &mut self.gl
+    }
+	
     #[inline]
     pub fn set_title(&mut self, title: &str)
     {

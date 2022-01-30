@@ -42,7 +42,7 @@ pub mod time
 }
 
 #[cfg(feature = "fs")]
-pub mod fs
+pub(crate) mod fs
 {
     use web_sys::{XmlHttpRequest, XmlHttpRequestResponseType};
     use js_sys::Uint8Array;
