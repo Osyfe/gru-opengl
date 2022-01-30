@@ -5,8 +5,8 @@ authors = ["Jannik Fehre"]
 edition = "2021"
 
 [features]
-default = ["fs"]
 fs = []
+resource = ["fs"]
 
 [dependencies]
 glow = "0.11.0"

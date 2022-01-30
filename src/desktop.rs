@@ -11,9 +11,9 @@ pub(crate) struct Stuff
     context: GlContext
 }
 
-impl Stuff
+impl StuffTrait for Stuff
 {
-    pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
+    fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
     {
         #[allow(unused_mut)]
         let mut builder = WindowBuilder::new();
@@ -40,13 +40,13 @@ impl Stuff
         (window, Self { context }, gl, "#version 110", "#version 110")
     }
 
-    pub(crate) fn init(&mut self, _window: &Window) {}
+    fn init(&mut self, _window: &Window) {}
 
-    pub(crate) fn active(&self) -> bool { true }
+    fn active(&self) -> bool { true }
 
-    pub(crate) fn deinit(&mut self) {}
+    fn deinit(&mut self) {}
 
-    pub(crate) fn swap_buffers(&self)
+    fn swap_buffers(&self)
     {
         self.context.swap_buffers();
     }
@@ -64,19 +64,19 @@ pub mod time
 pub mod fs
 {
     use std::io::{BufReader, BufWriter, prelude::*};
-    use std::sync::mpsc::{channel, Receiver};
+    use std::sync::mpsc::{channel, Receiver, TryRecvError};
     use ahash::AHashMap;
     use crate::event::File as EventFile;
 
     pub(crate) struct File
     {
-        receiver: Receiver<EventFile>,
-        data: Option<EventFile>
+        receiver: Receiver<Result<EventFile, String>>,
+        data: Option<Result<EventFile, String>>
     }
 
-    impl File
+    impl super::FileTrait for File
     {
-        pub(crate) fn load(name: &str, key: u64) -> Self
+        fn load(name: &str, key: u64) -> Self
         {
             let full_name = if cfg!(debug_assertions) { format!("export/data/{}", name) } else { format!("data/{}", name) };
             let name = name.to_string();
@@ -84,38 +84,59 @@ pub mod fs
             std::thread::spawn(move ||
             {
                 let mut contents = Vec::new();
-                BufReader::new(std::fs::File::open(&full_name).unwrap()).read_to_end(&mut contents).unwrap();
-                sender.send(EventFile { path: name, key, data: contents }).unwrap();
+                let file = match std::fs::File::open(&full_name)
+                {
+                    Ok(file) => file,
+                    Err(err) =>
+                    {
+                        sender.send(Err(format!("{:?}", err))).unwrap();
+                        return;
+                    }
+                };
+                match BufReader::new(file).read_to_end(&mut contents)
+                {
+                    Ok(_) => {},
+                    Err(err) =>
+                    {
+                        sender.send(Err(format!("{:?}", err))).unwrap();
+                        return;
+                    }
+                }
+                sender.send(Ok(EventFile { path: name, key, data: contents })).unwrap();
             });
             Self { receiver, data: None } 
         }
 
-        pub(crate) fn finished(&mut self) -> bool
+        fn finished(&mut self) -> bool
         {
             if self.data.is_some() { return true; }
             match self.receiver.try_recv()
             {
                 Ok(data) => { self.data = Some(data); true },
-                Err(_) => false
+                Err(TryRecvError::Disconnected) => { self.data = Some(Err("Loading Thread Disconnected".to_string())); true },
+                Err(TryRecvError::Empty) => false
             }
         }
 
-        pub(crate) fn get(self) -> Option<EventFile>
+        fn get(self) -> Option<Result<EventFile, String>>
         {
             self.data
         }
     }
 
-    pub struct Storage
+    pub(crate) struct Storage
     {
         map: AHashMap<String, String>
     }
 
     impl Storage
     {
-        const PATH: &'static str = if cfg!(debug_assertions) { "export/data/STORAGE.gru" } else { "data/STORAGE.gru" };
+        const PATH: &'static str = if super::DEBUG { "export/data/STORAGE.gru" } else { "data/STORAGE.gru" };
+    }
 
-        pub(crate) fn load() -> Self
+    impl super::StorageTrait for Storage
+    {
+        fn load() -> Self
         {
             let map = match std::fs::File::open(Self::PATH)
             {
@@ -130,13 +151,13 @@ pub mod fs
             Self { map }
         }
 
-        pub fn set(&mut self, key: &str, value: Option<&str>)
+        fn set(&mut self, key: &str, value: Option<&str>)
         {
             if let Some(value) = value { self.map.insert(key.to_string(), value.to_string()); }
             else { self.map.remove(key); }
         }
 
-        pub fn get(&self, key: &str) -> Option<String>
+        fn get(&self, key: &str) -> Option<String>
         {
             self.map.get(key).map(|value| value.to_string())
         }

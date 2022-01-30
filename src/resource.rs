@@ -2,7 +2,7 @@ use self::id::*;
 
 use super::log;
 use super::{event::File, gl::*, Context};
-use std::collections::HashMap;
+use ahash::AHashMap;
 use std::fmt::Display;
 use std::path::PathBuf;
 
@@ -257,8 +257,8 @@ impl<T: 'static + Load> Display for Res<T> {
 }
 pub struct Loadprotocol {
     name: String,
-    keys: HashMap<u64, String>,
-    files: HashMap<String, File>,
+    keys: AHashMap<u64, String>,
+    files: AHashMap<String, File>,
     missing_files: usize,
 }
 
@@ -281,8 +281,8 @@ impl Loadprotocol {
         let missing_files = 0;
         Loadprotocol {
             name,
-            keys: HashMap::new(),
-            files: HashMap::new(),
+            keys: AHashMap::new(),
+            files: AHashMap::new(),
             missing_files,
         }
     }
@@ -304,6 +304,7 @@ impl Loadprotocol {
         self.name.clone()
     }
 }
+
 mod id {
     #[derive(Debug, PartialEq, Clone)]
     pub struct Id<T: PartialEq + Copy + Clone + Increment> {

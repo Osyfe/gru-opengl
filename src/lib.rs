@@ -20,7 +20,34 @@ pub use android::*;
 pub mod event;
 use event::*;
 pub mod gl;
-pub mod resourcesystem;
+
+#[cfg(feature = "resource")]
+pub mod resource;
+
+trait StuffTrait: Sized
+{
+    fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str);
+    fn init(&mut self, window: &Window);
+    fn active(&self) -> bool;
+    fn deinit(&mut self);
+    fn swap_buffers(&self);
+}
+
+#[cfg(feature = "fs")]
+trait FileTrait: Sized
+{
+    fn load(name: &str, key: u64) -> Self;
+    fn finished(&mut self) -> bool;
+    fn get(self) -> Option<Result<File, String>>;
+}
+
+#[cfg(feature = "fs")]
+trait StorageTrait: Sized
+{
+    fn load() -> Self;
+    fn set(&mut self, key: &str, value: Option<&str>);
+    fn get(&self, key: &str) -> Option<String>;
+}
 
 pub fn start<T: App>(init: T::Init)
 {
@@ -128,9 +155,9 @@ pub struct Context
 {
     window: Window,
     window_dims: (u32, u32),
-    pub gl: gl::Gl,
+    gl: gl::Gl,
     #[cfg(feature = "fs")]
-    pub storage: fs::Storage,
+    storage: fs::Storage,
     #[cfg(feature = "fs")]
     files: Vec<fs::File>
 }
@@ -138,12 +165,29 @@ pub struct Context
 #[cfg(feature = "fs")]
 impl Context
 {
+    pub fn gl(&mut self) -> &mut gl::Gl
+    {
+        &mut self.gl
+    }
+
+    #[cfg(feature = "fs")]
+    pub fn set(&mut self, key: &str, value: Option<&str>)
+    {
+        self.storage.set(key, value);
+    }
+
+    #[cfg(feature = "fs")]
+    pub fn get_storage(&self, key: &str) -> Option<String>
+    {
+        self.storage.get(key)
+    }
+
     pub fn load_file(&mut self, name: &str, key: u64)
     {
         self.files.push(fs::File::load(name, key));
     }
 
-    fn check_files(&mut self) -> Vec<File>
+    fn check_files(&mut self) -> Vec<Result<File, String>>
     {
         if self.files.len() == 0 { return Vec::new(); }
         let mut finished = Vec::new();

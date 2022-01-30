@@ -21,5 +21,5 @@ pub enum Event
     Scroll(Scroll),
     Touch { position: (f32, f32), phase: TouchPhase, finger: u64 },
     #[cfg(feature = "fs")]
-    File(File)
+    File(Result<File, String>)
 }

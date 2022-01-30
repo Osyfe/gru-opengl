@@ -10,9 +10,9 @@ extern "C"
 
 pub(crate) struct Stuff;
 
-impl Stuff
+impl StuffTrait for Stuff
 {
-    pub(crate) fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
+    fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str)
     {
         use winit::platform::web::WindowBuilderExtWebSys;
         use wasm_bindgen::JsCast;
@@ -24,13 +24,13 @@ impl Stuff
         (window, Self, gl, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
     }
 
-    pub(crate) fn init(&mut self, _window: &Window) {}
+    fn init(&mut self, _window: &Window) {}
 
-    pub(crate) fn active(&self) -> bool { true }
+    fn active(&self) -> bool { true }
 
-    pub(crate) fn deinit(&mut self) {}
+    fn deinit(&mut self) {}
 
-    pub(crate) fn swap_buffers(&self) {}
+    fn swap_buffers(&self) {}
 }
 
 pub mod time
@@ -56,9 +56,9 @@ pub mod fs
         data: Option<Vec<u8>>
     }
 
-    impl File
+    impl super::FileTrait for File
     {
-        pub(crate) fn load(name: &str, key: u64) -> Self
+        fn load(name: &str, key: u64) -> Self
         {
             let name = name.to_string();
             let request = XmlHttpRequest::new().unwrap();
@@ -68,17 +68,25 @@ pub mod fs
             Self { name, key, request, data: None }
         }
 
-        pub(crate) fn finished(&mut self) -> bool
+        fn finished(&mut self) -> bool
         {
             if self.data.is_some() { return true; }
-            if self.request.ready_state() == 4 && self.request.status().unwrap() == 200 //DONE && OK
+            if self.request.ready_state() == 4 //DONE
             {
-                self.data = Some(Uint8Array::new_with_byte_offset(&self.request.response().unwrap(), 0).to_vec());
-                true
+                let status = self.request.status().unwrap();
+                if status == 200 //OK
+                {
+                    self.data = Some(Ok(Uint8Array::new_with_byte_offset(&self.request.response().unwrap(), 0).to_vec()));
+                    true
+                } else
+                {
+                    self.data = Some(Err("Loading Status not OK".to_string()));
+                    true
+                }
             } else { false }
         }
 
-        pub(crate) fn get(self) -> Option<EventFile>
+        fn get(self) -> Option<EventFile>
         {
             let path = self.name;
             let key = self.key;
@@ -86,25 +94,25 @@ pub mod fs
         }
     }
 
-    pub struct Storage
+    pub(crate) struct Storage
     {
         pub(crate) storage: web_sys::Storage
     }
 
-    impl Storage
+    impl super::StorageTrait for Storage
     {
-        pub(crate) fn load() -> Self
+        fn load() -> Self
         {
             Self { storage: web_sys::window().unwrap().local_storage().unwrap().unwrap() }
         }
 
-        pub fn set(&mut self, key: &str, value: Option<&str>)
+        fn set(&mut self, key: &str, value: Option<&str>)
         {
             if let Some(value) = value { self.storage.set_item(key, value).unwrap(); }
             else { self.storage.remove_item(key).unwrap(); }
         }
 
-        pub fn get(&self, key: &str) -> Option<String>
+        fn get(&self, key: &str) -> Option<String>
         {
             self.storage.get_item(key).unwrap()
         }
