@@ -23,6 +23,8 @@ pub mod gl;
 
 #[cfg(feature = "resource")]
 pub mod resource;
+#[cfg(feature = "ui")]
+pub mod ui;
 
 trait StuffTrait: Sized
 {

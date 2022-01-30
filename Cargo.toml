@@ -7,6 +7,7 @@ edition = "2021"
 [features]
 fs = []
 resource = ["fs"]
+ui = ["gru-misc/ui"]
 
 [dependencies]
 glow = "0.11.0"
