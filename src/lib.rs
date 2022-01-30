@@ -20,6 +20,7 @@ pub use android::*;
 pub mod event;
 use event::*;
 pub mod gl;
+pub mod resourcesystem;
 
 pub fn start<T: App>(init: T::Init)
 {
