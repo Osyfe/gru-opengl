@@ -6,7 +6,7 @@ use ahash::AHashMap;
 use std::fmt::Display;
 use std::path::PathBuf;
 
-mod load;
+pub mod load;
 
 pub type ResL<'a> = &'a mut dyn ResLoad;
 pub type ResIterMut<'a, 'b> = Box<dyn Iterator<Item = ResL<'b>> + 'a>;
@@ -307,7 +307,7 @@ impl Loadprotocol {
     }
 }
 
-mod id {
+pub mod id {
     #[derive(Debug, PartialEq, Clone)]
     pub struct Id<T: PartialEq + Copy + Clone + Increment> {
         value: T,
