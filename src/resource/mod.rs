@@ -6,6 +6,8 @@ use ahash::AHashMap;
 use std::fmt::Display;
 use std::path::PathBuf;
 
+mod load;
+
 pub type ResL<'a> = &'a mut dyn ResLoad;
 pub type ResIterMut<'a, 'b> = Box<dyn Iterator<Item = ResL<'b>> + 'a>;
 const RESOURCE_SYSTEM_MAX_SIZE: u64 = 1000000;
