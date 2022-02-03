@@ -10,7 +10,7 @@ pub mod load;
 
 pub type ResL<'a> = &'a mut dyn ResLoad;
 pub type ResIterMut<'a, 'b> = Box<dyn Iterator<Item = ResL<'b>> + 'a>;
-const RESOURCE_SYSTEM_MAX_SIZE: u64 = 1000000;
+pub const RESOURCE_SYSTEM_MAX_SIZE: u64 = 1000000;
 
 pub fn get_res_iter_mut<'a, 'b, const N: usize>(arr: [ResL<'b>; N]) -> ResIterMut {
     Box::new(arr.into_iter())
@@ -37,7 +37,7 @@ impl<T: ResourceSystem> ResSys<T> {
     }
 
     pub fn finished_loading(&self) -> bool {
-        log(&format!("Loaded {}/{}", self.loaded(), self.load()));
+        //log(&format!("Loaded {}/{}", self.loaded(), self.load()));
         self.loaded() == self.load()
     }
 
@@ -57,7 +57,7 @@ impl<T: ResourceSystem> ResSys<T> {
         )
     }
 
-    pub fn add_file_event(&mut self, file: File, gl: &mut Gl) {
+    pub fn add_file_event(&mut self, file: File, gl: &mut Gl) -> bool{
         self.add_file_event_wrapper(file, gl)
     }
 }
@@ -119,12 +119,18 @@ trait ResourceSystemWrapper: std::ops::Deref + Sized {
         ret
     }
 
-    fn add_file_event_wrapper(&mut self, file: File, gl: &mut Gl) {
-        let res_load = Box::new(self.get_iter_mut())
-            .find(|rl| rl.needs_key(&file.key))
-            .unwrap_or_else(|| panic!("Unknown key recived {:?}", file.key));
-        res_load.add_file(file, gl);
-        self.loaded_counter().increase();
+    fn add_file_event_wrapper(&mut self, file: File, gl: &mut Gl) -> bool {
+        let res_load_option = Box::new(self.get_iter_mut())
+            .find(|rl| rl.needs_key(&file.key));
+        if let Some(res_load) = res_load_option
+        {
+            res_load.add_file(file, gl);
+            self.loaded_counter().increase();
+            true
+        }
+        else {
+            false
+        }
     }
 }
 
@@ -139,6 +145,30 @@ pub trait ResourceSystem: Sized {
         ResSys::<Self>::create_loading(id, ctx)
     }
 }
+
+#[macro_export]
+macro_rules! impl_ResourceSystem {
+    ($subj: ident = $(($name: ident, $dt: ty, $filename: expr)),+) => {
+        pub struct $subj {
+            $(pub $name: gru_opengl::resource::Res<$dt>), +
+        }
+
+        impl gru_opengl::resource::ResourceSystem for $subj {
+            fn empty() -> Self {
+                Self
+                {
+                    $($name: gru_opengl::resource::Res::new($filename)), +
+                }
+                
+            }
+        
+            fn get_iter_mut(&mut self) -> gru_opengl::resource::ResIterMut {
+                Box::new([$(&mut self.$name as  gru_opengl::resource::ResL), +].into_iter())
+            }
+        }
+    };
+}
+//pub use impl_ResourceSystem;
 
 pub trait Load {
     fn load(key: &mut Id<u64>, path: &PathBuf, ctx: &mut Context) -> Loadprotocol;
