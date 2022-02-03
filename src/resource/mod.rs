@@ -148,7 +148,7 @@ pub trait ResourceSystem: Sized {
 
 #[macro_export]
 macro_rules! impl_ResourceSystem {
-    ($subj: ident = $(($name: ident, $dt: ty, $filename: expr)),+) => {
+    ($subj: ident = $(($name: ident, $dt: ty, $filename: expr, $config: expr)),+) => {
         pub struct $subj {
             $(pub $name: gru_opengl::resource::Res<$dt>), +
         }
@@ -157,9 +157,8 @@ macro_rules! impl_ResourceSystem {
             fn empty() -> Self {
                 Self
                 {
-                    $($name: gru_opengl::resource::Res::new($filename)), +
+                    $($name: gru_opengl::resource::Res::new($filename, $config)), +
                 }
-                
             }
         
             fn get_iter_mut(&mut self) -> gru_opengl::resource::ResIterMut {
@@ -168,11 +167,11 @@ macro_rules! impl_ResourceSystem {
         }
     };
 }
-//pub use impl_ResourceSystem;
 
 pub trait Load {
+    type Config;
     fn load(key: &mut Id<u64>, path: &PathBuf, ctx: &mut Context) -> Loadprotocol;
-    fn interpret(lp: &Loadprotocol, gl: &mut Gl) -> Self;
+    fn interpret(lp: &Loadprotocol, gl: &mut Gl, config: &mut Self::Config) -> Self;
     fn path(name: &'static str) -> PathBuf;
 }
 enum ResState<T> {
@@ -201,9 +200,10 @@ impl<T: Load> Display for ResState<T> {
     }
 }
 
-pub struct Res<T> {
+pub struct Res<T: Load> {
     res: ResState<T>,
     path: PathBuf,
+    config: T::Config
 }
 pub trait ResLoad {
     fn load(&mut self, key_gen: &mut Id<u64>, ctx: &mut Context);
@@ -222,7 +222,7 @@ impl<T: 'static + Load> ResLoad for Res<T> {
     fn interpret(&mut self, gl: &mut Gl) {
         if let ResState::Loading(lp) = &self.res {
             let name = &lp.name();
-            self.res = ResState::Loaded(T::interpret(lp, gl));
+            self.res = ResState::Loaded(T::interpret(lp, gl, &mut self.config));
             log(&format!("Loaded {name}"));
         }
     }
@@ -247,10 +247,11 @@ impl<T: 'static + Load> Res<T> {
             .unwrap_or_else(|| panic!("Resource not loaded {:?}", self.path))
     }
 
-    pub fn new(name: &'static str) -> Self {
+    pub fn new(name: &'static str, config: T::Config) -> Self {
         Self {
             res: ResState::Empty,
             path: T::path(name),
+            config
         }
     }
 

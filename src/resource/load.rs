@@ -5,6 +5,7 @@ use super::*;
 use std::collections::hash_map::Entry;
 
 impl<T: AttributesReprCpacked> Load for Shader<T> {
+    type Config = ();
     fn path(name: &'static str) -> PathBuf {
         PathBuf::from("shaders").join(name) //no extension because 2 files .vert .frag in function
     }
@@ -26,7 +27,7 @@ impl<T: AttributesReprCpacked> Load for Shader<T> {
         lp
     }
 
-    fn interpret(lp: &Loadprotocol, gl: &mut Gl) -> Self {
+    fn interpret(lp: &Loadprotocol, gl: &mut Gl, _: &mut Self::Config) -> Self {
         let vertex_glsl = String::from_utf8_lossy(lp.get_data("vert"));
         let fragment_glsl = String::from_utf8_lossy(lp.get_data("frag"));
         gl.new_shader(&vertex_glsl, &fragment_glsl)
@@ -34,6 +35,7 @@ impl<T: AttributesReprCpacked> Load for Shader<T> {
 }
 
 impl<const P: bool> Load for Texture<P> {
+    type Config = TextureConfig;
     fn path(name: &'static str) -> PathBuf {
         PathBuf::from("textures").join(name).with_extension("png")
     }
@@ -44,20 +46,15 @@ impl<const P: bool> Load for Texture<P> {
         lp
     }
 
-    fn interpret(lp: &Loadprotocol, gl: &mut Gl) -> Self {
+    fn interpret(lp: &Loadprotocol, gl: &mut Gl, config: &mut Self::Config) -> Self {
         let name = lp.name();
         let img = image::load_from_memory(lp.get_data("file")).unwrap();
         let (width, height) = img.dimensions();
         if width != height {
             panic!("Texture {name} is not quadratic (w/h) = ({width}/{height})")
         };
-        let img = img.into_rgba8().into_raw(); //normals may need different coding
-        let config = TextureConfig {
-            size: width,
-            channel: TextureChannel::RGBA, //normals may have different channels
-            mipmap: true,
-            wrap: TextureWrap::Clamp,
-        };
+        let img = img.into_rgb8().into_raw(); //normals may need different coding
+        config.size = width;
         gl.new_texture(&config, &img)
     }
 }
@@ -80,6 +77,7 @@ pub struct Model<V: BuildFromGltf> {
 }
 
 impl<V: BuildFromGltf> Load for Model<V> {
+    type Config = ();
     fn path(name: &'static str) -> PathBuf {
         PathBuf::from("models").join(name)
     }
@@ -101,7 +99,7 @@ impl<V: BuildFromGltf> Load for Model<V> {
         lp
     }
 
-    fn interpret(lp: &Loadprotocol, gl: &mut Gl) -> Self {
+    fn interpret(lp: &Loadprotocol, gl: &mut Gl, _: &mut Self::Config) -> Self {
         let model_name = lp.name();
         let doc = Gltf::from_slice(lp.get_data("gltf")).unwrap().document;
         let mut bin = AHashMap::new();
