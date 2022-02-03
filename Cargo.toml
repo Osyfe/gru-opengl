@@ -13,6 +13,8 @@ ui = ["gru-misc/ui"]
 glow = "0.11.0"
 gru-misc = { path = "../gru-misc", features = ["math"] }
 ahash = {version = "0.7.5", features = ["serde"] }
+gltf = { version = "0.16.0", default-features = false, features = ["names"] }
+image = { version = "0.23.12", default-features = false, features = ["png"] }
 
 # desktop
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
