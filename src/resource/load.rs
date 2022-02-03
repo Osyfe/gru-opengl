@@ -6,21 +6,21 @@ use std::collections::hash_map::Entry;
 
 impl<T: AttributesReprCpacked> Load for Shader<T> {
     type Config = ();
-    fn path(name: &'static str) -> PathBuf {
-        PathBuf::from("shaders").join(name) //no extension because 2 files .vert .frag in function
+    fn path(file_name: &'static str) -> PathBuf {
+        PathBuf::from("shaders").join(file_name) //no extension because 2 files .vert .frag in function
     }
 
     fn load(key_gen: &mut Id<u64>, path: &PathBuf, ctx: &mut Context) -> Loadprotocol {
         let mut lp = Loadprotocol::empty(format!("Shader {path:?}"));
         lp.request_file(
             key_gen,
-            path.with_extension("vert").to_str().unwrap(),
+            &path.with_extension("vert").to_string_lossy(),
             "vert",
             ctx,
         );
         lp.request_file(
             key_gen,
-            path.with_extension("frag").to_str().unwrap(),
+            &path.with_extension("frag").to_string_lossy(),
             "frag",
             ctx,
         );
@@ -53,13 +53,13 @@ impl TextureLoadConfig {
 
 impl<const P: bool> Load for Texture<P> {
     type Config = TextureLoadConfig;
-    fn path(name: &'static str) -> PathBuf {
-        PathBuf::from("textures").join(name).with_extension("png")
+    fn path(file_name: &'static str) -> PathBuf {
+        PathBuf::from("textures").join(file_name).with_extension("png")
     }
 
     fn load(key_gen: &mut Id<u64>, path: &PathBuf, ctx: &mut Context) -> Loadprotocol {
         let mut lp = Loadprotocol::empty(format!("Texture {path:?}"));
-        lp.request_file(key_gen, path.to_str().unwrap(), "file", ctx);
+        lp.request_file(key_gen, &path.to_string_lossy(), "file", ctx);
         lp
     }
 
@@ -97,21 +97,21 @@ pub struct Model<V: BuildFromGltf> {
 
 impl<V: BuildFromGltf> Load for Model<V> {
     type Config = ();
-    fn path(name: &'static str) -> PathBuf {
-        PathBuf::from("models").join(name)
+    fn path(file_name: &'static str) -> PathBuf {
+        PathBuf::from("models").join(file_name)
     }
 
     fn load(key_gen: &mut Id<u64>, path: &PathBuf, ctx: &mut Context) -> Loadprotocol {
         let mut lp = Loadprotocol::empty(format!("Model {path:?}"));
         lp.request_file(
             key_gen,
-            path.with_extension("gltf").to_str().unwrap(),
+            &path.with_extension("gltf").to_string_lossy(),
             "gltf",
             ctx,
         );
         lp.request_file(
             key_gen,
-            path.with_extension("bin").to_str().unwrap(),
+            &path.with_extension("bin").to_string_lossy(),
             "bin",
             ctx,
         );

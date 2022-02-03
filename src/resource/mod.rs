@@ -8,11 +8,17 @@ use std::path::PathBuf;
 
 pub mod load;
 
-pub type ResL<'a> = &'a mut dyn ResLoad;
-pub type ResIterMut<'a, 'b> = Box<dyn Iterator<Item = ResL<'b>> + 'a>;
 pub const RESOURCE_SYSTEM_MAX_SIZE: u64 = 1000000;
 
-pub fn get_res_iter_mut<'a, 'b, const N: usize>(arr: [ResL<'b>; N]) -> ResIterMut {
+pub type ResLMut<'a> = &'a mut dyn ResLoad;
+pub type ResIterMut<'a, 'b> = Box<dyn Iterator<Item = ResLMut<'b>> + 'a>;
+pub fn get_res_iter_mut<'a, 'b, const N: usize>(arr: [ResLMut<'b>; N]) -> ResIterMut {
+    Box::new(arr.into_iter())
+}
+
+pub type ResL<'a> = &'a dyn ResLoad;
+pub type ResIter<'a, 'b> = Box<dyn Iterator<Item = ResL<'b>> + 'a>;
+pub fn get_res_iter<'a, 'b, const N: usize>(arr: [ResL<'b>; N]) -> ResIter {
     Box::new(arr.into_iter())
 }
 
@@ -32,8 +38,8 @@ impl<T: ResourceSystem> ResSys<T> {
         *self.loaded_counter.current()
     }
 
-    pub fn get_resource_len(&mut self) -> usize {
-        self.get_iter_mut().count()
+    pub fn get_resource_len(& self) -> usize {
+        self.get_iter().count()
     }
 
     pub fn finished_loading(&self) -> bool {
@@ -45,9 +51,9 @@ impl<T: ResourceSystem> ResSys<T> {
         self.loaded() as f32 / self.load() as f32
     }
 
-    pub fn get_resource_status(&mut self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    pub fn get_resource_status(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Current Loadstatus:\n").expect("Faild to write String");
-        self.get_iter_mut().for_each(|res| {
+        self.get_iter().for_each(|res| {
             write!(f, "{}\n", res.display_string()).expect("Faild to write String");
         });
         write!(
@@ -57,7 +63,7 @@ impl<T: ResourceSystem> ResSys<T> {
         )
     }
 
-    pub fn add_file_event(&mut self, file: File, gl: &mut Gl) -> bool {
+    pub fn add_file_event(&mut self, file: File, gl: &mut Gl) {
         self.add_file_event_wrapper(file, gl)
     }
 }
@@ -82,6 +88,10 @@ impl<T: ResourceSystem> ResourceSystemWrapper for ResSys<T> {
 
     fn get_iter_mut(&mut self) -> ResIterMut {
         self.res.get_iter_mut()
+    }
+
+    fn get_iter(&self) -> ResIter {
+        self.res.get_iter()
     }
 
     fn load(&mut self, ctx: &mut Context) {
@@ -110,6 +120,7 @@ trait ResourceSystemWrapper: std::ops::Deref + Sized {
 
     fn empty(id: u64) -> Self;
     fn get_iter_mut(&mut self) -> ResIterMut;
+    fn get_iter(& self) -> ResIter;
 
     fn load(&mut self, ctx: &mut Context);
 
@@ -119,27 +130,29 @@ trait ResourceSystemWrapper: std::ops::Deref + Sized {
         ret
     }
 
-    fn add_file_event_wrapper(&mut self, file: File, gl: &mut Gl) -> bool {
-        let res_load_option = Box::new(self.get_iter_mut()).find(|rl| rl.needs_key(&file.key));
-        if let Some(res_load) = res_load_option {
-            res_load.add_file(file, gl);
-            self.loaded_counter().increase();
-            true
-        } else {
-            false
-        }
+    fn add_file_event_wrapper(&mut self, file: File, gl: &mut Gl) {
+        Box::new(self.get_iter_mut())
+            .find(|rl| rl.needs_key(&file.key))
+            .unwrap_or_else(|| panic!("Unknown key recived {:?} for File {:?}", file.key, file.path))
+            .add_file(file, gl);
+        self.loaded_counter().increase();
     }
 }
 
 pub trait ResourceSystem: Sized {
     fn empty() -> Self;
     fn get_iter_mut(&mut self) -> ResIterMut;
+    fn get_iter(&self) -> ResIter;
     fn new(id: u64) -> ResSys<Self> {
         ResSys::<Self>::empty(id)
     }
 
     fn new_loading(id: u64, ctx: &mut Context) -> ResSys<Self> {
         ResSys::<Self>::create_loading(id, ctx)
+    }
+
+    fn needs_key(&self, key: &u64) -> bool {
+        self.get_iter().any(|rl| rl.needs_key(key))
     }
 }
 
@@ -159,7 +172,11 @@ macro_rules! impl_ResourceSystem {
             }
 
             fn get_iter_mut(&mut self) -> gru_opengl::resource::ResIterMut {
-                Box::new([$(&mut self.$name as  gru_opengl::resource::ResL), +].into_iter())
+                Box::new([$(&mut self.$name as  gru_opengl::resource::ResLMut), +].into_iter())
+            }
+
+            fn get_iter(& self) -> gru_opengl::resource::ResIter {
+                Box::new([$(& self.$name as  gru_opengl::resource::ResL), +].into_iter())
             }
         }
     };
@@ -167,9 +184,9 @@ macro_rules! impl_ResourceSystem {
 
 pub trait Load {
     type Config;
-    fn load(key: &mut Id<u64>, path: &PathBuf, ctx: &mut Context) -> Loadprotocol;
+    fn load(key_gen: &mut Id<u64>, file_path: &PathBuf, ctx: &mut Context) -> Loadprotocol;
     fn interpret(lp: &Loadprotocol, gl: &mut Gl, config: &mut Self::Config) -> Self;
-    fn path(name: &'static str) -> PathBuf;
+    fn path(file_name: &'static str) -> PathBuf;
 }
 enum ResState<T> {
     Empty,
@@ -332,14 +349,14 @@ impl Loadprotocol {
     pub fn request_file(
         &mut self,
         key_gen: &mut Id<u64>,
-        filename: &str,
+        path: &str,
         keyname: &str,
         ctx: &mut Context,
     ) {
         let key = key_gen.next();
         self.missing_files += 1;
         self.keys.insert(key, keyname.to_string());
-        ctx.load_file(filename, key);
+        ctx.load_file(path, key);
     }
 
     pub fn name(&self) -> String {
