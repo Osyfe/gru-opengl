@@ -26,6 +26,9 @@ pub mod resource;
 #[cfg(feature = "ui")]
 pub mod ui;
 
+#[cfg(feature = "rodio")]
+use rodio::{OutputStream, OutputStreamHandle};
+
 trait StuffTrait: Sized
 {
     fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str);
@@ -57,10 +60,17 @@ pub fn start<T: App>(init: T::Init)
     let (window, mut stuff, gl, glsl_vertex_header, glsl_fragment_header) = Stuff::new(&event_loop);
     let gl = gl::Gl::new(gl, glsl_vertex_header, glsl_fragment_header);
     let window_dims = window.inner_size().into();
-    #[cfg(feature = "fs")]
-    let mut ctx = Context { window, window_dims, gl, storage: fs::Storage::load(), files: Vec::new() };
-    #[cfg(not(feature = "fs"))]
-    let mut ctx = Context { window, window_dims, gl };
+    let mut ctx = Context
+    {
+        window,
+        window_dims,
+        #[cfg(feature = "fs")]
+        gl, storage: fs::Storage::load(),
+        #[cfg(feature = "fs")]
+        files: Vec::new(),
+        #[cfg(feature = "rodio")]
+        audio_device: None
+    };
     let mut app = None;
     let mut init = Some(init);
 
@@ -107,6 +117,11 @@ pub fn start<T: App>(init: T::Init)
             },
             RawEvent::WindowEvent { event: WindowEvent::MouseInput { button, state, .. }, .. } =>
             {
+                #[cfg(feature = "rodio")]
+                if ctx.audio_device.is_none()
+                {
+                    ctx.audio_device = Some(OutputStream::try_default().unwrap());
+                }
                 if let Some(app) = &mut app { app.input(&mut ctx, Event::Click { button, pressed: state == ElementState::Pressed }); }
             },
             RawEvent::WindowEvent { event: WindowEvent::CursorMoved { position, .. }, .. } =>
@@ -125,6 +140,11 @@ pub fn start<T: App>(init: T::Init)
             },
             RawEvent::WindowEvent { event: WindowEvent::Touch(Touch { phase, location, id, .. }), .. } =>
             {
+                #[cfg(feature = "rodio")]
+                if ctx.audio_device.is_none()
+                {
+                    ctx.audio_device = Some(OutputStream::try_default().unwrap());
+                }
                 let position: (f32, f32) = location.into();
                 let w_dim_1 = ctx.window_dims.1 as f32;
                 if let Some(app) = &mut app { app.input(&mut ctx, Event::Touch { position: (position.0, w_dim_1 - position.1), phase, finger: id }); }
@@ -161,43 +181,9 @@ pub struct Context
     #[cfg(feature = "fs")]
     storage: fs::Storage,
     #[cfg(feature = "fs")]
-    files: Vec<fs::File>
-}
-
-#[cfg(feature = "fs")]
-impl Context
-{
-    pub fn set_storage(&mut self, key: &str, value: Option<&str>)
-    {
-        self.storage.set(key, value);
-    }
-
-    pub fn get_storage(&self, key: &str) -> Option<String>
-    {
-        self.storage.get(key)
-    }
-
-    pub fn load_file(&mut self, name: &str, key: u64)
-    {
-        self.files.push(fs::File::load(name, key));
-    }
-
-    fn check_files(&mut self) -> Vec<Result<File, String>>
-    {
-        if self.files.len() == 0 { return Vec::new(); }
-        let mut finished = Vec::new();
-        let mut i = self.files.len();
-        while i > 0
-        {
-            i -= 1;
-            if self.files[i].finished()
-            {
-                let file = self.files.remove(i);
-                finished.push(file.get().unwrap());
-            }
-        }
-        finished
-    }
+    files: Vec<fs::File>,
+    #[cfg(feature = "rodio")]
+    audio_device: Option<(OutputStream, OutputStreamHandle)>
 }
 
 impl Context
@@ -237,6 +223,51 @@ impl Context
     {
         let fullscreen = if open { Some(Fullscreen::Borderless(None)) } else { None };
         self.window.set_fullscreen(fullscreen);
+    }
+}
+
+#[cfg(feature = "fs")]
+impl Context
+{
+    pub fn set_storage(&mut self, key: &str, value: Option<&str>)
+    {
+        self.storage.set(key, value);
+    }
+
+    pub fn get_storage(&self, key: &str) -> Option<String>
+    {
+        self.storage.get(key)
+    }
+
+    pub fn load_file(&mut self, name: &str, key: u64)
+    {
+        self.files.push(fs::File::load(name, key));
+    }
+
+    fn check_files(&mut self) -> Vec<Result<File, String>>
+    {
+        if self.files.len() == 0 { return Vec::new(); }
+        let mut finished = Vec::new();
+        let mut i = self.files.len();
+        while i > 0
+        {
+            i -= 1;
+            if self.files[i].finished()
+            {
+                let file = self.files.remove(i);
+                finished.push(file.get().unwrap());
+            }
+        }
+        finished
+    }
+}
+
+#[cfg(feature = "rodio")]
+impl Context
+{
+    pub fn audio(&self) -> Option<&OutputStreamHandle>
+    {
+        self.audio_device.as_ref().map(|(_, device)| device)
     }
 }
 

@@ -1,5 +1,7 @@
 use gltf::{accessor, buffer, Gltf, Semantic};
 use image::GenericImageView;
+use std::{path::PathBuf, time::Duration, sync::Arc};
+use rodio::{Decoder, source::Source};
 
 use super::*;
 use std::collections::hash_map::Entry;
@@ -86,6 +88,7 @@ pub struct VertexData {
     pub tex_coord: [f32; 2],
     pub color: [f32; 3],
 }
+
 pub trait BuildFromGltf: AttributesReprCpacked {
     fn build(data: VertexData) -> Self;
 }
@@ -248,5 +251,102 @@ impl<V: BuildFromGltf> Load for Model<V> {
             vertices: vert_buffer,
             indices: index_buffer,
         }
+    }
+}
+
+pub struct Audio 
+{
+    channels: u16,
+    sample_rate: u32,
+    duration: Duration,
+    data: Arc<Vec<f32>>
+}
+
+pub struct AudioSource
+{
+    channels: u16,
+    sample_rate: u32,
+    duration: Duration,
+    data: Arc<Vec<f32>>,
+    index: usize
+}
+
+impl Load for Audio 
+{
+    type Config = ();
+    fn load(key_gen: &mut Id<u64>, file_path: &std::path::PathBuf, ctx: &mut Context) -> Loadprotocol 
+    {
+        let mut lp = Loadprotocol::empty(format!("Sound {file_path:?}"));
+        lp.request_file(key_gen, &file_path.to_string_lossy(), "file", ctx);
+        lp
+    }
+
+    fn interpret(lp: &Loadprotocol, _gl: &mut Gl, _: &mut Self::Config) -> Self 
+    {
+        let decoder = Decoder::new_vorbis(gru_misc::io::SliceReadSeek::new(&lp.get_data("file"))).unwrap();
+        let channels = decoder.channels();
+        let sample_rate = decoder.sample_rate();
+        let data = decoder.convert_samples::<f32>().collect::<Vec<_>>();
+        Audio::new(channels, sample_rate, data)
+    }
+
+    fn path(file_name: &'static str) -> std::path::PathBuf 
+    {
+        PathBuf::from("sounds").join(file_name).with_extension("ogg")
+    }
+}
+
+impl Audio {
+    pub fn buffer(&self) -> AudioSource
+    {
+        AudioSource { channels: self.channels, sample_rate: self.sample_rate, duration: self.duration, data: self.data.clone(), index: 0 }
+    }
+
+    fn new(channels: u16, sample_rate: u32, data: Vec<f32>) -> Self {
+        assert!(channels != 0);
+        assert!(sample_rate != 0);
+
+        let duration_ns = 1_000_000_000u64.checked_mul(data.len() as u64).unwrap()
+            / sample_rate as u64
+            / channels as u64;
+        let duration = Duration::new(
+            duration_ns / 1_000_000_000,
+            (duration_ns % 1_000_000_000) as u32,
+        );
+
+        Audio {
+            channels,
+            sample_rate,
+            duration,
+            data: Arc::new(data)
+        }
+    }
+}
+
+impl Iterator for AudioSource {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let i = self.index;
+        self.index += 1;
+        self.data.get(i).cloned()
+    }
+}
+
+impl Source for AudioSource {
+    fn current_frame_len(&self) -> Option<usize> {
+        None
+    }
+
+    fn channels(&self) -> u16 {
+        self.channels
+    }
+
+    fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+
+    fn total_duration(&self) -> Option<std::time::Duration> {
+        Some(self.duration)
     }
 }

@@ -6,12 +6,12 @@ edition = "2021"
 
 [features]
 fs = []
-resource = ["fs", "gltf", "image"]
+resource = ["fs", "gltf", "image", "rodio"]
 ui = ["gru-misc/ui"]
 
 [dependencies]
 glow = "0.11.0"
-gru-misc = { path = "../gru-misc", features = ["math"] }
+gru-misc = { path = "../gru-misc", features = ["math", "io"] }
 ahash = {version = "0.7.5", features = ["serde"] }
 gltf = { version = "0.16.0", default-features = false, features = ["names"], optional = true }
 image = { version = "0.23.12", default-features = false, features = ["png"], optional = true }
@@ -26,6 +26,8 @@ bincode = "1.3.3"
 winit = { version = "0.25.0", default-features = false, features = ["x11"] }
 [target.'cfg(all(not(target_arch = "wasm32"), not(target_os = "linux")))'.dependencies]
 winit = { version = "0.25.0", default-features = false }
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rodio = { version = "0.14.0", default-features = false, features = ["vorbis"], optional = true }
 
 # web
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -33,6 +35,7 @@ winit = { version = "0.25.0", default-features = false, features = ["web-sys"] }
 js-sys = "0.3.55"
 wasm-bindgen = "0.2.78"
 web-sys = { version = "0.3.55", features = ["Window", "Document", "Element", "HtmlCanvasElement", "WebGlRenderingContext", "WebGlBuffer", "WebGlShader", "WebGlProgram", "Performance", "XmlHttpRequest", "XmlHttpRequestResponseType", "Storage"] }
+rodio = { version = "0.14.0", default-features = false, features = ["vorbis", "wasm-bindgen"], optional = true }
 
 # android
 [target.'cfg(target_os = "android")'.dependencies]
