@@ -57,7 +57,7 @@ impl<T: ResourceSystem> ResSys<T> {
         )
     }
 
-    pub fn add_file_event(&mut self, file: File, gl: &mut Gl) -> bool{
+    pub fn add_file_event(&mut self, file: File, gl: &mut Gl) -> bool {
         self.add_file_event_wrapper(file, gl)
     }
 }
@@ -120,15 +120,12 @@ trait ResourceSystemWrapper: std::ops::Deref + Sized {
     }
 
     fn add_file_event_wrapper(&mut self, file: File, gl: &mut Gl) -> bool {
-        let res_load_option = Box::new(self.get_iter_mut())
-            .find(|rl| rl.needs_key(&file.key));
-        if let Some(res_load) = res_load_option
-        {
+        let res_load_option = Box::new(self.get_iter_mut()).find(|rl| rl.needs_key(&file.key));
+        if let Some(res_load) = res_load_option {
             res_load.add_file(file, gl);
             self.loaded_counter().increase();
             true
-        }
-        else {
+        } else {
             false
         }
     }
@@ -160,7 +157,7 @@ macro_rules! impl_ResourceSystem {
                     $($name: gru_opengl::resource::Res::new($filename, $config)), +
                 }
             }
-        
+
             fn get_iter_mut(&mut self) -> gru_opengl::resource::ResIterMut {
                 Box::new([$(&mut self.$name as  gru_opengl::resource::ResL), +].into_iter())
             }
@@ -203,7 +200,7 @@ impl<T: Load> Display for ResState<T> {
 pub struct Res<T: Load> {
     res: ResState<T>,
     path: PathBuf,
-    config: T::Config
+    config: T::Config,
 }
 pub trait ResLoad {
     fn load(&mut self, key_gen: &mut Id<u64>, ctx: &mut Context);
@@ -247,11 +244,23 @@ impl<T: 'static + Load> Res<T> {
             .unwrap_or_else(|| panic!("Resource not loaded {:?}", self.path))
     }
 
+    pub fn get_config(&self) -> &T::Config {
+        &self.config
+    }
+
+    pub fn get_config_mut(&mut self) -> Option<&mut T::Config> {
+        if let ResState::Loaded(_) = self.res {
+            None
+        } else {
+            Some(&mut self.config)
+        }
+    }
+
     pub fn new(name: &'static str, config: T::Config) -> Self {
         Self {
             res: ResState::Empty,
             path: T::path(name),
-            config
+            config,
         }
     }
 

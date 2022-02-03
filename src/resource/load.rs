@@ -1,4 +1,4 @@
-use gltf::{Gltf, buffer, accessor, Semantic};
+use gltf::{accessor, buffer, Gltf, Semantic};
 use image::GenericImageView;
 
 use super::*;
@@ -34,8 +34,25 @@ impl<T: AttributesReprCpacked> Load for Shader<T> {
     }
 }
 
+pub struct TextureLoadConfig {
+    channel: crate::gl::TextureChannel,
+    mipmap: bool,
+    wrap: crate::gl::TextureWrap,
+}
+
+impl TextureLoadConfig {
+    fn add_size(&self, size: u32) -> TextureConfig {
+        TextureConfig {
+            size,
+            channel: self.channel,
+            mipmap: self.mipmap,
+            wrap: self.wrap,
+        }
+    }
+}
+
 impl<const P: bool> Load for Texture<P> {
-    type Config = TextureConfig;
+    type Config = TextureLoadConfig;
     fn path(name: &'static str) -> PathBuf {
         PathBuf::from("textures").join(name).with_extension("png")
     }
@@ -53,12 +70,14 @@ impl<const P: bool> Load for Texture<P> {
         if width != height {
             panic!("Texture {name} is not quadratic (w/h) = ({width}/{height})")
         };
-        let img = img.into_rgb8().into_raw(); //normals may need different coding
-        config.size = width;
-        gl.new_texture(&config, &img)
+        let img = match config.channel {
+            TextureChannel::RGBA => img.into_rgba8().into_raw(),
+            TextureChannel::RGB => img.into_rgb8().into_raw(),
+            TextureChannel::A => img.into_luma8().into_raw(),
+        };
+        gl.new_texture(&config.add_size(width), &img)
     }
 }
-
 
 pub struct VertexData {
     pub position: [f32; 3],
@@ -171,7 +190,7 @@ impl<V: BuildFromGltf> Load for Model<V> {
                 Semantic::Colors(_) => Some(&mut colors),
                 //Semantic::Weights(_) => Some(&mut weights),
                 //Semantic::Joints(_) => Some(&mut joints),
-                _ => None
+                _ => None,
             } {
                 let accessor = attribute.1;
                 if accessor.data_type() != accessor::DataType::F32 {
@@ -190,7 +209,7 @@ impl<V: BuildFromGltf> Load for Model<V> {
                     for float in data.chunks_exact(4) {
                         vec.push(f32::from_le_bytes(float.try_into().unwrap()));
                     }
-                };
+                }
             }
         }
 
@@ -201,7 +220,12 @@ impl<V: BuildFromGltf> Load for Model<V> {
         let mut color_iter = colors.chunks_exact(3);
 
         let mut vertices = Vec::new();
-        for _ in 0..((positions.len()/3).max(normals.len()/3).max(tangents.len()/4).max(tex_coords.len()/2).max(colors.len()/3)) {
+        for _ in 0..((positions.len() / 3)
+            .max(normals.len() / 3)
+            .max(tangents.len() / 4)
+            .max(tex_coords.len() / 2)
+            .max(colors.len() / 3))
+        {
             let pos = position_iter.next().unwrap_or(&[0.0; 3]);
             let n = normal_iter.next().unwrap_or(&[0.0; 3]);
             let t = tangent_iter.next().unwrap_or(&[0.0; 4]);
@@ -213,7 +237,7 @@ impl<V: BuildFromGltf> Load for Model<V> {
                 normal: [n[0], n[1], n[2]],
                 tangent: [t[0], t[1], t[2], t[3]],
                 tex_coord: [tc[0], tc[1]],
-                color: [c[0], c[1], c[2]]
+                color: [c[0], c[1], c[2]],
             }));
         }
         let mut vert_buffer = gl.new_vertex_buffer(vertices.len() as u32, BufferAccess::Static);
