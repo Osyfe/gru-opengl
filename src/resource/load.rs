@@ -303,6 +303,7 @@ impl Audio {
     }
 
     fn new(channels: u16, sample_rate: u32, data: Vec<f32>) -> Self {
+        //copied from rodio
         assert!(channels != 0);
         assert!(sample_rate != 0);
 

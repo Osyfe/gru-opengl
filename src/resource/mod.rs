@@ -5,10 +5,17 @@ use super::{event::File, gl::*, Context};
 use ahash::AHashMap;
 use std::fmt::Display;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 pub mod load;
 
 pub const RESOURCE_SYSTEM_MAX_SIZE: u64 = 1000000;
+static RESOURCE_ID: AtomicU64 = AtomicU64::new(1);
+fn next_resource_id() -> u64 {
+    let ret = RESOURCE_ID.load(Ordering::Relaxed);
+    RESOURCE_ID.fetch_add(1, Ordering::Relaxed);
+    ret
+}
 
 pub type ResLMut<'a> = &'a mut dyn ResLoad;
 pub type ResIterMut<'a, 'b> = Box<dyn Iterator<Item = ResLMut<'b>> + 'a>;
@@ -30,6 +37,7 @@ pub struct ResSys<T: ResourceSystem> {
 }
 
 impl<T: ResourceSystem> ResSys<T> {
+   
     fn load(&self) -> u64 {
         *self.load_id.current() - self.id * RESOURCE_SYSTEM_MAX_SIZE
     }
@@ -124,8 +132,9 @@ trait ResourceSystemWrapper: std::ops::Deref + Sized {
 
     fn load(&mut self, ctx: &mut Context);
 
-    fn create_loading(id: u64, ctx: &mut Context) -> Self {
-        let mut ret = Self::empty(id);
+    fn create_loading(ctx: &mut Context) -> Self {
+        let mut ret = Self::empty(next_resource_id());
+
         ret.load(ctx);
         ret
     }
@@ -147,8 +156,8 @@ pub trait ResourceSystem: Sized {
         ResSys::<Self>::empty(id)
     }
 
-    fn new_loading(id: u64, ctx: &mut Context) -> ResSys<Self> {
-        ResSys::<Self>::create_loading(id, ctx)
+    fn new_loading(ctx: &mut Context) -> ResSys<Self> {
+        ResSys::<Self>::create_loading(ctx)
     }
 
     fn needs_key(&self, key: &u64) -> bool {
