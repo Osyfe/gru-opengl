@@ -91,7 +91,7 @@ impl Binding
             GlEvent::Cursor { position } =>
             {
                 self.pos = Vec2(position.0, size.1 - position.1);
-                Some(UiEvent::PointerMoved { pos: self.pos })
+                Some(UiEvent::PointerMoved { pos: self.pos, delta: Vec2(0.0, 0.0) })
             },
             GlEvent::Scroll(_) => None,
             GlEvent::Touch { .. } => None,

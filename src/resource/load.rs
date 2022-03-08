@@ -283,7 +283,7 @@ impl Load for Audio
 
     fn interpret(lp: &Loadprotocol, _gl: &mut Gl, _: &mut Self::Config) -> Self 
     {
-        let decoder = Decoder::new_vorbis(gru_misc::io::SliceReadSeek::new(&lp.get_data("file"))).unwrap();
+        let decoder = Decoder::new_vorbis(std::io::Cursor::new(lp.get_data("file"))).unwrap();
         let channels = decoder.channels();
         let sample_rate = decoder.sample_rate();
         let data = decoder.convert_samples::<f32>().collect::<Vec<_>>();

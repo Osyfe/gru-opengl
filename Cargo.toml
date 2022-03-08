@@ -11,7 +11,7 @@ ui = ["gru-misc/ui"]
 
 [dependencies]
 glow = "0.11.0"
-gru-misc = { path = "../gru-misc", features = ["math", "io"] }
+gru-misc = { path = "../gru-misc", features = ["math"] }
 ahash = {version = "0.7.5", features = ["serde"] }
 gltf = { version = "0.16.0", default-features = false, features = ["names"], optional = true }
 image = { version = "0.23.12", default-features = false, features = ["png"], optional = true }

@@ -64,8 +64,9 @@ pub fn start<T: App>(init: T::Init)
     {
         window,
         window_dims,
+        gl,
         #[cfg(feature = "fs")]
-        gl, storage: fs::Storage::load(),
+        storage: fs::Storage::load(),
         #[cfg(feature = "fs")]
         files: Vec::new(),
         #[cfg(feature = "rodio")]
