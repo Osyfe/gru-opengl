@@ -74,6 +74,10 @@ impl<T: ResourceSystem> ResSys<T> {
     pub fn add_file_event(&mut self, file: File, gl: &mut Gl) {
         self.add_file_event_wrapper(file, gl)
     }
+
+    pub fn start_loading(&mut self, ctx: &mut Context) {
+        self.load(ctx)
+    }
 }
 
 impl<T: ResourceSystem> ResourceSystemWrapper for ResSys<T> {
@@ -139,6 +143,10 @@ trait ResourceSystemWrapper: std::ops::Deref + Sized {
         ret
     }
 
+    fn create() -> Self {
+        Self::empty(next_resource_id())
+    }
+
     fn add_file_event_wrapper(&mut self, file: File, gl: &mut Gl) {
         Box::new(self.get_iter_mut())
             .find(|rl| rl.needs_key(&file.key))
@@ -154,6 +162,10 @@ pub trait ResourceSystem: Sized {
     fn get_iter(&self) -> ResIter;
     fn new(id: u64) -> ResSys<Self> {
         ResSys::<Self>::empty(id)
+    }
+
+    fn new_unloaded() -> ResSys<Self> {
+        ResSys::<Self>::create()
     }
 
     fn new_loading(ctx: &mut Context) -> ResSys<Self> {
