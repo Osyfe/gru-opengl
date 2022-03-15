@@ -38,7 +38,8 @@ pub enum Primitives
 	Points,
 	Lines,
 	LineStrip,
-	Triangles
+	Triangles,
+	TriangleFan
 }
 
 impl Primitives
@@ -50,7 +51,8 @@ impl Primitives
 			Self::Points => glow::POINTS,
 			Self::Lines => glow::LINES,
 			Self::LineStrip => glow::LINE_STRIP,
-			Self::Triangles => glow::TRIANGLES
+			Self::Triangles => glow::TRIANGLES,
+			Self::TriangleFan => glow::TRIANGLE_FAN
 		}
 	}
 }
