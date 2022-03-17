@@ -16,6 +16,7 @@ pub struct File
 pub enum Event
 {
     Key { key: KeyCode, pressed: bool },
+    Char(char),
     Click { button: MouseButton, pressed: bool },
     Cursor { position: (f32, f32) },
     Scroll(Scroll),

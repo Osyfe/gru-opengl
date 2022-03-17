@@ -116,6 +116,10 @@ pub fn start<T: App>(init: T::Init)
             {
                 if let Some(app) = &mut app { app.input(&mut ctx, Event::Key { key, pressed: state == ElementState::Pressed }); }
             },
+            RawEvent::WindowEvent { event: WindowEvent::ReceivedCharacter(ch), .. } =>
+            {
+                if let Some(app) = &mut app { app.input(&mut ctx, Event::Char(ch)); }
+            },
             RawEvent::WindowEvent { event: WindowEvent::MouseInput { button, state, .. }, .. } =>
             {
                 #[cfg(feature = "rodio")]
