@@ -58,6 +58,7 @@ impl AttributesReprCpacked for Vertex
 pub struct Binding
 {
     pos: Vec2,
+    events: Vec<UiEvent>,
     shader: Shader<Vertex>,
     tex_key: UniformKey<Texture<false>>,
     glyphs: Option<(u64, Texture<false>)>,
@@ -74,6 +75,7 @@ impl Binding
         Self
         {
             pos: Vec2(0.0, 0.0),
+            events: Vec::new(),
             shader,
             tex_key,
             glyphs: None,
@@ -82,9 +84,9 @@ impl Binding
         }
     }
 
-    pub fn event(&mut self, size: Vec2, event: &GlEvent) -> Option<UiEvent>
+    pub fn event(&mut self, size: Vec2, event: &GlEvent) -> bool
     {
-        match event
+        let event = match event
         {
             GlEvent::Key { key, pressed } => convert_key(*key).map(|key| UiEvent::Key { key, pressed: *pressed }),
             GlEvent::Char(ch) => Some(UiEvent::Char(*ch)),
@@ -98,11 +100,27 @@ impl Binding
             GlEvent::Touch { .. } => None,
             #[cfg(feature = "fs")]
             GlEvent::File(_) => None
+        };
+        match event
+        {
+            Some(event) =>
+            {
+                self.events.push(event);
+                true
+            },
+            None => false
         }
+    }
+
+    pub fn events(&self) -> &[UiEvent]
+    {
+        &self.events
     }
 
     pub fn frame(&mut self, size: Vec2, gl: &mut Gl, frame: PaintFrame)
     {
+        self.events.clear();
+
         let PaintFrame { new, vertices, indices, font_version, font_data } = frame;
 
         if self.glyphs.as_ref().map(|(version, _)| *version != font_version).unwrap_or(true)
