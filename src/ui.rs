@@ -63,7 +63,8 @@ pub struct Binding
     tex_key: UniformKey<Texture<false>>,
     glyphs: Option<(u64, Texture<false>)>,
     vertices: VertexBuffer<Vertex>,
-    indices: IndexBuffer
+    indices: IndexBuffer,
+    count: u32
 }
 
 impl Binding
@@ -80,7 +81,8 @@ impl Binding
             tex_key,
             glyphs: None,
             vertices: gl.new_vertex_buffer(0, BufferAccess::Dynamic),
-            indices: gl.new_index_buffer(0, BufferAccess::Dynamic)
+            indices: gl.new_index_buffer(0, BufferAccess::Dynamic),
+            count: 0
         }
     }
 
@@ -156,6 +158,7 @@ impl Binding
             if self.indices.len() < indices.len() as u32 { self.indices = gl.new_index_buffer(indices.len() as u32, BufferAccess::Dynamic); }
             self.vertices.data(0, &vertices);
             self.indices.data(0, &indices);
+            self.count = indices.len() as u32;
         }
     }
 
@@ -166,7 +169,7 @@ impl Binding
             rp
                 .pipeline(&self.shader, PipelineInfo { depth_test: false, alpha_blend: true, face_cull: false })
                 .uniform_key(&self.tex_key, glyphs)
-                .draw(Primitives::Triangles, &self.vertices, Some(&self.indices), 0, self.indices.len());
+                .draw(Primitives::Triangles, &self.vertices, Some(&self.indices), 0, self.count);
         }
     }
 }
