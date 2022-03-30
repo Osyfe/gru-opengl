@@ -151,7 +151,7 @@ impl Binding
                 {
                     pos: pos.into(),
                     coords,
-                    color: vertex.color
+                    color: vertex.color.to_normalized_srgb()
                 }
             }).collect();
             if self.vertices.len() < vertices.len() as u32 { self.vertices = gl.new_vertex_buffer(vertices.len() as u32, BufferAccess::Dynamic); }
