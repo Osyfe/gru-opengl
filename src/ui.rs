@@ -1,6 +1,6 @@
 pub use gru_misc::ui::*;
 
-use crate::event::{Event as GlEvent, MouseButton as GlButton, KeyCode as GlKey};
+use crate::event::{Event as GlEvent, MouseButton as GlButton, KeyCode as GlKey, Scroll as GlScroll};
 use event::{Event as UiEvent, MouseButton as UiButton, Key as UiKey};
 use gru_misc::paint::{Vec2, Frame as PaintFrame, TEXTURE_SIZE};
 use crate::gl::*;
@@ -98,7 +98,7 @@ impl Binding
                 self.pos = Vec2(position.0, size.1 - position.1);
                 Some(UiEvent::PointerMoved { pos: self.pos, delta: Vec2(0.0, 0.0) })
             },
-            GlEvent::Scroll(_) => None,
+            GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(UiEvent::Scroll { dx: *dx, dy: *dy }),
             GlEvent::Touch { .. } => None,
             #[cfg(feature = "fs")]
             GlEvent::File(_) => None
