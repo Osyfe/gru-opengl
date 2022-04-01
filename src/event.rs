@@ -19,6 +19,7 @@ pub enum Event
     Char(char),
     Click { button: MouseButton, pressed: bool },
     Cursor { position: (f32, f32) },
+    CursorGone,
     Scroll(Scroll),
     Touch { position: (f32, f32), phase: TouchPhase, finger: u64 },
     #[cfg(feature = "fs")]

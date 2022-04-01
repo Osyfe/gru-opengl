@@ -98,6 +98,7 @@ impl Binding
                 self.pos = Vec2(position.0, size.1 - position.1);
                 Some(UiEvent::PointerMoved { pos: self.pos, delta: Vec2(0.0, 0.0) })
             },
+            GlEvent::CursorGone => Some(UiEvent::PointerGone),
             GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(UiEvent::Scroll { dx: *dx, dy: *dy }),
             GlEvent::Touch { .. } => None,
             #[cfg(feature = "fs")]

@@ -135,6 +135,10 @@ pub fn start<T: App>(init: T::Init)
                 let w_dim_1 = ctx.window_dims.1 as f32;
                 if let Some(app) = &mut app { app.input(&mut ctx, Event::Cursor { position: (position.0, w_dim_1 - position.1) }); }
             },
+            RawEvent::WindowEvent { event: WindowEvent::CursorLeft { .. }, .. } =>
+            {
+                if let Some(app) = &mut app { app.input(&mut ctx, Event::CursorGone); }
+            },
             RawEvent::WindowEvent { event: WindowEvent::MouseWheel { delta, .. }, .. } =>
             {
                 if let Some(app) = &mut app { app.input(&mut ctx, Event::Scroll(match delta
