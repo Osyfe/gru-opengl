@@ -283,7 +283,7 @@ impl Load for Audio
 
     fn interpret(lp: &Loadprotocol, _gl: &mut Gl, _: &mut Self::Config) -> Self 
     {
-        let decoder = Decoder::new_vorbis(std::io::Cursor::new(lp.get_data("file"))).unwrap();
+        let decoder = Decoder::new_vorbis(std::io::Cursor::new(lp.get_data("file").to_owned())).unwrap(); //TODO to_owned necessary since rodio 0.15.0. avoidable?
         let channels = decoder.channels();
         let sample_rate = decoder.sample_rate();
         let data = decoder.convert_samples::<f32>().collect::<Vec<_>>();
