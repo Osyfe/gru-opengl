@@ -12,9 +12,9 @@ ui = ["gru-misc/ui"]
 [dependencies]
 glow = "0.11.0"
 gru-misc = { path = "../gru-misc", features = ["math"] }
-ahash = {version = "0.7.5", features = ["serde"] }
-gltf = { version = "0.16.0", default-features = false, features = ["names"], optional = true }
-image = { version = "0.23.12", default-features = false, features = ["png"], optional = true }
+ahash = {version = "0.7.6", features = ["serde"] }
+gltf = { version = "1.0.0", default-features = false, features = ["names"], optional = true }
+image = { version = "0.24.2", default-features = false, features = ["png"], optional = true }
 
 # desktop
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
@@ -27,7 +27,7 @@ winit = { version = "0.25.0", default-features = false, features = ["x11"] }
 [target.'cfg(all(not(target_arch = "wasm32"), not(target_os = "linux")))'.dependencies]
 winit = { version = "0.25.0", default-features = false }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rodio = { version = "0.14.0", default-features = false, features = ["vorbis"], optional = true }
+rodio = { version = "0.15.0", default-features = false, features = ["vorbis"], optional = true }
 
 # web
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -35,11 +35,11 @@ winit = { version = "0.25.0", default-features = false, features = ["web-sys"] }
 js-sys = "0.3.55"
 wasm-bindgen = "0.2.78"
 web-sys = { version = "0.3.55", features = ["Window", "Document", "Element", "HtmlCanvasElement", "WebGlRenderingContext", "WebGlBuffer", "WebGlShader", "WebGlProgram", "Performance", "XmlHttpRequest", "XmlHttpRequestResponseType", "Storage"] }
-rodio = { version = "0.14.0", default-features = false, features = ["vorbis", "wasm-bindgen"], optional = true }
+rodio = { version = "0.15.0", default-features = false, features = ["vorbis", "wasm-bindgen"], optional = true }
 
 # android
 [target.'cfg(target_os = "android")'.dependencies]
-raw-window-handle = "0.3.3"
+raw-window-handle = "0.3.4"
 ndk-glue = "0.3.0" #0.4 out, but winit uses 0.3
 khronos-egl = { version = "4.1.0", features = ["dynamic"] }
 libloading = "0.7.0"
