@@ -1,4 +1,4 @@
-pub use gru_misc::ui::*;
+use gru_misc::ui::*;
 
 use crate::event::{Event as GlEvent, MouseButton as GlButton, KeyCode as GlKey, Scroll as GlScroll};
 use event::{Event as UiEvent, MouseButton as UiButton, Key as UiKey};

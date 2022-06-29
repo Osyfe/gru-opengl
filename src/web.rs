@@ -53,7 +53,7 @@ pub(crate) mod fs
         name: String,
         key: u64,
         request: XmlHttpRequest,
-        data: Option<Vec<u8>>
+        data: Option<Result<Vec<u8>, String>>
     }
 
     impl super::FileTrait for File
@@ -86,11 +86,11 @@ pub(crate) mod fs
             } else { false }
         }
 
-        fn get(self) -> Option<EventFile>
+        fn get(self) -> Option<Result<EventFile, String>>
         {
             let path = self.name;
             let key = self.key;
-            self.data.map(|data| EventFile { path, key, data })
+            self.data.map(|data| data.map(|data| EventFile { path, key, data }))
         }
     }
 
