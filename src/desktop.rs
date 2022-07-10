@@ -27,8 +27,9 @@ impl StuffTrait for Stuff
         {
             version: (2, 0),
             profile: raw_gl_context::Profile::Compatibility,
+            depth_bits: 24,
             stencil_bits: 0,
-            samples: None,
+            samples: Some(4),
             srgb: true,
             double_buffer: true,
             vsync: true,
@@ -39,12 +40,6 @@ impl StuffTrait for Stuff
         let gl = unsafe { glow::Context::from_loader_function(|symbol| context.get_proc_address(symbol) as *const _) };
         (window, Self { context }, gl, "#version 110", "#version 110")
     }
-
-    fn init(&mut self, _window: &Window) {}
-
-    fn active(&self) -> bool { true }
-
-    fn deinit(&mut self) {}
 
     fn swap_buffers(&self)
     {

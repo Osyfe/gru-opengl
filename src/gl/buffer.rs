@@ -40,6 +40,7 @@ impl Gl
 pub enum BufferType
 {
 	Float { size: u8 },
+	#[cfg(not(target_arch = "wasm32"))]
 	Int { signed: bool, size: u8 }
 }
 

@@ -21,9 +21,6 @@ image = { version = "0.24.2", default-features = false, features = ["png"], opti
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
 raw-gl-context = "0.1.2"
 bincode = "1.3.3"
-
-# non web
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rodio = { version = "0.15.0", default-features = false, features = ["vorbis"], optional = true }
 
 # web
@@ -32,10 +29,3 @@ js-sys = "0.3.57"
 wasm-bindgen = "0.2.80"
 web-sys = { version = "0.3.57", features = ["Window", "Document", "Element", "HtmlCanvasElement", "WebGlRenderingContext", "WebGlBuffer", "WebGlShader", "WebGlProgram", "Performance", "XmlHttpRequest", "XmlHttpRequestResponseType", "Storage"] }
 rodio = { version = "0.15.0", default-features = false, features = ["vorbis", "wasm-bindgen"], optional = true }
-
-# android
-[target.'cfg(target_os = "android")'.dependencies]
-raw-window-handle = "0.3.4"
-ndk-glue = "0.5.0"
-khronos-egl = { version = "4.1.0", features = ["dynamic"] }
-libloading = "0.7.0"

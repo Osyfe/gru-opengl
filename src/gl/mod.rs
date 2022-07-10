@@ -32,6 +32,23 @@ impl Gl
 {
 	pub(crate) fn new(gl: Context, glsl_vertex_header: &'static str, glsl_fragment_header: &'static str) -> Self
 	{
+		unsafe
+		{
+			#[cfg(not(target_arch = "wasm32"))]
+			gl.disable(glow::FRAMEBUFFER_SRGB);
+			gl.clear_color(0.0, 0.0, 0.0, 1.0);
+
+			gl.enable(glow::DEPTH_TEST);
+			gl.depth_func(glow::LEQUAL);
+			gl.disable(glow::BLEND);
+			gl.blend_equation(glow::FUNC_ADD);
+			gl.blend_func(glow::ONE, glow::ONE_MINUS_SRC_ALPHA); //SRC_ALPHA produces garbage on web...
+			gl.enable(glow::CULL_FACE);
+			gl.cull_face(glow::BACK);
+
+			gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
+		}
+
 		Self
 		{
 			window_dims: (0, 0),
@@ -49,36 +66,6 @@ impl Gl
 				face_cull: true
 			}
 		}
-	}
-
-	pub(crate) fn init(&mut self) -> &mut Self
-	{
-		let gl = &self.raw;
-		unsafe
-		{
-			#[cfg(not(any(target_arch = "wasm32", target_os = "android")))]
-			gl.disable(glow::FRAMEBUFFER_SRGB);
-			gl.clear_color(0.0, 0.0, 0.0, 1.0);
-
-			gl.enable(glow::DEPTH_TEST);
-			gl.depth_func(glow::LEQUAL);
-			gl.disable(glow::BLEND);
-			gl.blend_equation(glow::FUNC_ADD);
-			gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
-			gl.enable(glow::CULL_FACE);
-			gl.cull_face(glow::BACK);
-
-			gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
-		}
-		self.viewport = (-1, -1);
-		self.clear_color = (0.0, 0.0, 0.0);
-		self.pipeline = PipelineInfo
-		{
-			depth_test: true,
-			alpha_blend: false,
-			face_cull: true
-		};
-		self
 	}
 
 	fn attribute_location(attributes: &mut AHashMap<String, u32>, name: &str, action: &mut dyn FnMut(&str, u32))

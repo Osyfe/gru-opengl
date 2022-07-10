@@ -1,8 +1,6 @@
-Event Pointer diff
-file io android bug fixes
-sound android test
+alpha blend eq (text)
+
+Event Pointer diff?
 
 networking
 threads?
-
-android installLocation?

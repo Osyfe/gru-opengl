@@ -100,7 +100,6 @@ impl Binding
             },
             GlEvent::CursorGone => Some(UiEvent::PointerGone),
             GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(UiEvent::Scroll { dx: *dx, dy: *dy }),
-            GlEvent::Touch { .. } => None,
             #[cfg(feature = "fs")]
             GlEvent::File(_) => None
         };
@@ -144,7 +143,7 @@ impl Binding
                     None => (-1.0, -1.0),
                     Some((s, t, l)) =>
                     {
-                        if l > 0 { panic!("Multiple glyph textures not implemented yet."); }
+                        if l > 0 { unimplemented!("Multiple glyph textures."); }
                         (s, t)
                     }
                 };

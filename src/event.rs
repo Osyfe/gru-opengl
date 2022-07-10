@@ -21,7 +21,6 @@ pub enum Event
     Cursor { position: (f32, f32) },
     CursorGone,
     Scroll(Scroll),
-    Touch { position: (f32, f32), phase: TouchPhase, finger: u64 },
     #[cfg(feature = "fs")]
     File(Result<File, String>)
 }

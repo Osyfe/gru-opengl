@@ -1,4 +1,4 @@
-use winit::{dpi::PhysicalSize, event::{ElementState, Event as RawEvent, KeyboardInput, MouseScrollDelta, Touch, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder, Fullscreen}};
+use winit::{dpi::PhysicalSize, event::{ElementState, Event as RawEvent, KeyboardInput, MouseScrollDelta, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder, Fullscreen}};
 
 pub const DEBUG: bool = cfg!(debug_assertions);
 
@@ -11,11 +11,6 @@ pub use desktop::*;
 mod web;
 #[cfg(target_arch = "wasm32")]
 pub use web::*;
-
-#[cfg(target_os = "android")]
-mod android;
-#[cfg(target_os = "android")]
-pub use android::*;
 
 pub mod event;
 use event::*;
@@ -32,9 +27,6 @@ use rodio::{OutputStream, OutputStreamHandle};
 trait StuffTrait: Sized
 {
     fn new<T>(event_loop: &EventLoop<T>) -> (Window, Self, glow::Context, &'static str,  &'static str);
-    fn init(&mut self, window: &Window);
-    fn active(&self) -> bool;
-    fn deinit(&mut self);
     fn swap_buffers(&self);
 }
 
@@ -57,7 +49,7 @@ trait StorageTrait: Sized
 pub fn start<T: App>(init: T::Init)
 {
     let event_loop = EventLoop::new();
-    let (window, mut stuff, gl, glsl_vertex_header, glsl_fragment_header) = Stuff::new(&event_loop);
+    let (window, stuff, gl, glsl_vertex_header, glsl_fragment_header) = Stuff::new(&event_loop);
     let gl = gl::Gl::new(gl, glsl_vertex_header, glsl_fragment_header);
     let window_dims = window.inner_size().into();
     let mut ctx = Context
@@ -72,38 +64,13 @@ pub fn start<T: App>(init: T::Init)
         #[cfg(feature = "rodio")]
         audio_device: None
     };
-    let mut app = None;
-    let mut init = Some(init);
-
+    let mut app = T::init(&mut ctx, init);
     let mut then = time::now();
 
     event_loop.run(move |event, _, control_flow|
     {
         match event
         {
-            #[cfg(not(target_os = "android"))]
-            RawEvent::NewEvents(winit::event::StartCause::Init) =>
-            {
-                stuff.init(&ctx.window);
-                ctx.gl.init();
-                app = Some(T::init(&mut ctx, init.take().unwrap()));
-            },
-            #[cfg(target_os = "android")]
-            RawEvent::Resumed =>
-            {
-                stuff.init(&window);
-                if app.is_none()
-                {
-                    ctx.gl.init();
-                    app = Some(T::init(&mut ctx, init.take().unwrap()));
-                }
-                then = time::now();
-            },
-            RawEvent::LoopDestroyed | RawEvent::Suspended =>
-            {
-                stuff.deinit();
-                if let Some(app) = app.take() { init = Some(app.deinit(&mut ctx)); }
-            },
             RawEvent::WindowEvent { event: WindowEvent::Resized(PhysicalSize { width, height }), .. } =>
             {
                 ctx.window_dims = (width, height)
@@ -114,11 +81,11 @@ pub fn start<T: App>(init: T::Init)
             },
             RawEvent::WindowEvent { event: WindowEvent::KeyboardInput { input: KeyboardInput { state, virtual_keycode: Some(key), .. }, .. }, .. } =>
             {
-                if let Some(app) = &mut app { app.input(&mut ctx, Event::Key { key, pressed: state == ElementState::Pressed }); }
+                app.input(&mut ctx, Event::Key { key, pressed: state == ElementState::Pressed });
             },
             RawEvent::WindowEvent { event: WindowEvent::ReceivedCharacter(ch), .. } =>
             {
-                if let Some(app) = &mut app { app.input(&mut ctx, Event::Char(ch)); }
+               app.input(&mut ctx, Event::Char(ch));
             },
             RawEvent::WindowEvent { event: WindowEvent::MouseInput { button, state, .. }, .. } =>
             {
@@ -127,41 +94,28 @@ pub fn start<T: App>(init: T::Init)
                 {
                     ctx.audio_device = Some(OutputStream::try_default().unwrap());
                 }
-                if let Some(app) = &mut app { app.input(&mut ctx, Event::Click { button, pressed: state == ElementState::Pressed }); }
+                app.input(&mut ctx, Event::Click { button, pressed: state == ElementState::Pressed });
             },
             RawEvent::WindowEvent { event: WindowEvent::CursorMoved { position, .. }, .. } =>
             {
                 let position: (f32, f32) = position.into();
                 let w_dim_1 = ctx.window_dims.1 as f32;
-                if let Some(app) = &mut app { app.input(&mut ctx, Event::Cursor { position: (position.0, w_dim_1 - position.1) }); }
+                app.input(&mut ctx, Event::Cursor { position: (position.0, w_dim_1 - position.1) });
             },
             RawEvent::WindowEvent { event: WindowEvent::CursorLeft { .. }, .. } =>
             {
-                if let Some(app) = &mut app { app.input(&mut ctx, Event::CursorGone); }
+                app.input(&mut ctx, Event::CursorGone);
             },
             RawEvent::WindowEvent { event: WindowEvent::MouseWheel { delta, .. }, .. } =>
             {
-                if let Some(app) = &mut app { app.input(&mut ctx, Event::Scroll(match delta
+                app.input(&mut ctx, Event::Scroll(match delta
                 {
                     MouseScrollDelta::LineDelta(x, y) => Scroll::Wheel(x, y),
                     MouseScrollDelta::PixelDelta(p) => Scroll::Touch(p.x as f32, p.y as f32)
-                })); }
+                }));
             },
-            RawEvent::WindowEvent { event: WindowEvent::Touch(Touch { phase, location, id, .. }), .. } =>
+            RawEvent::MainEventsCleared =>
             {
-                #[cfg(feature = "rodio")]
-                if ctx.audio_device.is_none()
-                {
-                    ctx.audio_device = Some(OutputStream::try_default().unwrap());
-                }
-                let position: (f32, f32) = location.into();
-                let w_dim_1 = ctx.window_dims.1 as f32;
-                if let Some(app) = &mut app { app.input(&mut ctx, Event::Touch { position: (position.0, w_dim_1 - position.1), phase, finger: id }); }
-            },
-            RawEvent::MainEventsCleared => if stuff.active()
-            {
-                let app = app.as_mut().unwrap();
-
                 #[cfg(feature = "fs")]
                 for file in ctx.check_files().into_iter()
                 {
@@ -176,6 +130,10 @@ pub fn start<T: App>(init: T::Init)
                 if !app.frame(&mut ctx, dt) { *control_flow = ControlFlow::Exit; }
 
                 stuff.swap_buffers();
+            },
+            RawEvent::LoopDestroyed =>
+            {
+                app.deinit(&mut ctx);
             },
             _ => ()
         }
@@ -286,5 +244,5 @@ pub trait App: 'static
     fn init(ctx: &mut Context, init: Self::Init) -> Self;
     fn input(&mut self, ctx: &mut Context, event: Event);
     fn frame(&mut self, ctx: &mut Context, dt: f32) -> bool;
-    fn deinit(self, ctx: &mut Context) -> Self::Init;
+    fn deinit(&mut self, ctx: &mut Context);
 }

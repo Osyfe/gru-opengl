@@ -18,17 +18,24 @@ impl StuffTrait for Stuff
         use wasm_bindgen::JsCast;
         let web_window = web_sys::window().unwrap();
         let canvas: web_sys::HtmlCanvasElement = web_window.document().unwrap().get_element_by_id("canvas").unwrap().dyn_into().unwrap();
-        let context: web_sys::WebGlRenderingContext = canvas.get_context("webgl").unwrap().unwrap().dyn_into().unwrap();
+        let options = wasm_bindgen::JsValue::from_str(r#"
+        {
+            alpha: false,
+            depth: true,
+            stencil: false,
+            desynchronized: true,
+            antialias: true,
+            failIfMajorPerformanceCaveat: false,
+            powerPreference: "high-performance",
+            premultipliedAlpha: false,
+            preserveDrawingBuffer: false,
+            xrCompatible: false
+        }"#);
+        let context: web_sys::WebGlRenderingContext = canvas.get_context_with_context_options("webgl", &options).unwrap().unwrap().dyn_into().unwrap();
         let window = WindowBuilder::new().with_canvas(Some(canvas)).build(&event_loop).unwrap();
         let gl = glow::Context::from_webgl1_context(context);
         (window, Self, gl, "#version 100\nprecision mediump float;", "#version 100\nprecision mediump float;")
     }
-
-    fn init(&mut self, _window: &Window) {}
-
-    fn active(&self) -> bool { true }
-
-    fn deinit(&mut self) {}
 
     fn swap_buffers(&self) {}
 }
