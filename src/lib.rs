@@ -168,14 +168,14 @@ impl Context
     }
 
     #[inline]
-    #[cfg(windows)]
+    #[cfg(target_os = "windows")]
     pub fn set_icon(&mut self, window_icon: Option<winit::window::Icon>)
     {
         self.window.set_window_icon(window_icon);
     }
 
     #[inline]
-    #[cfg(windows)]
+    #[cfg(target_os = "windows")]
     pub fn set_icon_raw(&mut self, colors: Vec<u8>, (width, height): (u32, u32))
     {
         let icon = winit::window::Icon::from_rgba(colors, width, height);
