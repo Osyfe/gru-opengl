@@ -1,4 +1,4 @@
-use winit::{dpi::PhysicalSize, event::{ElementState, Event as RawEvent, KeyboardInput, MouseScrollDelta, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder, Fullscreen}};
+use winit::{dpi::PhysicalSize, event::{ElementState, Event as RawEvent, KeyboardInput, MouseScrollDelta, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder, Fullscreen, Icon}};
 
 pub const DEBUG: bool = cfg!(debug_assertions);
 
@@ -167,18 +167,18 @@ impl Context
         self.window.set_title(title);
     }
 
-    #[inline]
     #[cfg(target_os = "windows")]
-    pub fn set_icon(&mut self, window_icon: Option<winit::window::Icon>)
+    #[inline]
+    pub fn set_icon(&mut self, window_icon: Option<Icon>)
     {
         self.window.set_window_icon(window_icon);
     }
 
-    #[inline]
     #[cfg(target_os = "windows")]
+    #[inline]
     pub fn set_icon_raw(&mut self, colors: Vec<u8>, (width, height): (u32, u32))
     {
-        let icon = winit::window::Icon::from_rgba(colors, width, height);
+        let icon = Icon::from_rgba(colors, width, height);
         self.set_icon(icon.ok());
     }
 

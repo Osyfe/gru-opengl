@@ -1,8 +1,9 @@
 [package]
 name = "gru-opengl"
 version = "0.1.0"
-authors = ["Jannik Fehre"]
+authors = ["Jannik Fehre", "Fabian Osyguß"]
 edition = "2021"
+publish = false
 
 [features]
 fs = []
