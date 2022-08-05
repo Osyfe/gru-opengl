@@ -167,6 +167,19 @@ impl Context
         self.window.set_title(title);
     }
 
+    #[cfg(windows)]
+    pub fn set_icon(&mut self, window_icon: Option<winit::window::Icon>)
+    {
+        self.window.set_window_icon(window_icon);
+    }
+
+    #[cfg(windows)]
+    pub fn set_icon_raw(&mut self, colors: Vec<u8>, (width, height): (u32, u32))
+    {
+        let icon = winit::window::Icon::from_rgba(colors, width, height);
+        self.set_icon(icon.ok());
+    }
+
     #[inline]
     pub fn window_dims(&self) -> (u32, u32)
     {
