@@ -221,6 +221,11 @@ impl Context
         self.storage.get(key)
     }
 
+    pub fn get_storage_keys(&self) -> Vec<String>
+    {
+        self.storage.keys()
+    }
+
     pub fn load_file(&mut self, name: &str, key: u64)
     {
         self.files.push(fs::File::load(name, key));

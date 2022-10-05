@@ -127,6 +127,11 @@ pub(crate) mod fs
     impl Storage
     {
         const PATH: &'static str = if super::DEBUG { "export/data/STORAGE.gru" } else { "data/STORAGE.gru" };
+
+        pub fn keys(&self) -> Vec<String> 
+        {
+            self.map.keys().cloned().collect()
+        }
     }
 
     impl super::StorageTrait for Storage
