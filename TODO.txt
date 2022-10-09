@@ -1,3 +1,5 @@
+desktop only features
+
 alpha blend eq (text)
 
 Event Pointer diff?
