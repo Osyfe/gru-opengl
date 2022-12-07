@@ -140,6 +140,7 @@ impl<'a, 'b, T: AttributesReprCpacked> Pipeline<'a, 'b, T>
 				match ty
 				{
 					BufferType::Float { size } => gl.vertex_attrib_pointer_f32(*location, *size as i32, glow::FLOAT, false, std::mem::size_of::<T>() as i32, *offset),
+					#[cfg(not(target_arch = "wasm32"))]
 					BufferType::Int { signed, size } => gl.vertex_attrib_pointer_i32(*location, *size as i32, if *signed { glow::INT } else { glow::UNSIGNED_INT }, std::mem::size_of::<T>() as i32, *offset)
 				}
 				gl.enable_vertex_attrib_array(*location);

@@ -108,6 +108,7 @@ impl Gl
 			size_of_t += (match ty
 			{
 				BufferType::Float { size } => *size,
+				#[cfg(not(target_arch = "wasm32"))]
 				BufferType::Int { size, .. } => *size
 			}) as usize * 4;
 		}

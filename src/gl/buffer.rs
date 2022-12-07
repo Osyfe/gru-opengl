@@ -16,6 +16,7 @@ impl Gl
 		let size_of_t: usize = T::ATTRIBUTES.iter().map(|(ty, _)| match ty
 		{
 			BufferType::Float { size } => *size as usize * 4,
+			#[cfg(not(target_arch = "wasm32"))]
 			BufferType::Int { size, .. } => *size as usize * 4
 		}).sum();
 		if size_of_t != std::mem::size_of::<T>() { panic!("Gl::new_vertex_buffer: Wrong attribute trait implementation (the struct size does not match)."); }
@@ -48,6 +49,7 @@ impl BufferType
 {
 	pub(crate) fn code(&self) -> u32
 	{
+		#[cfg(not(target_arch = "wasm32"))]
 		match self
 		{
 			Self::Float { size: 1 } => glow::FLOAT,
@@ -62,6 +64,15 @@ impl BufferType
 			Self::Int { signed: false, size: 2 } => glow::UNSIGNED_INT_VEC2,
 			Self::Int { signed: false, size: 3 } => glow::UNSIGNED_INT_VEC3,
 			Self::Int { signed: false, size: 4 } => glow::UNSIGNED_INT_VEC4,
+			_ => panic!("Invalid BufferType.")
+		}
+		#[cfg(target_arch = "wasm32")]
+		match self
+		{
+			Self::Float { size: 1 } => glow::FLOAT,
+			Self::Float { size: 2 } => glow::FLOAT_VEC2,
+			Self::Float { size: 3 } => glow::FLOAT_VEC3,
+			Self::Float { size: 4 } => glow::FLOAT_VEC4,
 			_ => panic!("Invalid BufferType.")
 		}
 	}
