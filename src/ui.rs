@@ -24,6 +24,9 @@ const VERT: &str =
 
 const FRAG: &str =
 "
+    #define MIN 0.46
+    #define MAX 0.54
+    
     varying vec2 out_coords;
     varying vec4 out_color;
 
@@ -32,7 +35,11 @@ const FRAG: &str =
     void main()
     {
         float alpha = 1.0;
-        if(out_coords.s > -0.5) alpha = texture2D(glyphs, out_coords).a;
+        if(out_coords.s > -0.5)
+        {
+            float sdf = texture2D(glyphs, out_coords).a;
+            alpha = (clamp(sdf, MIN, MAX) - MIN) / (MAX - MIN);
+        }
         gl_FragColor = alpha * out_color;
     }
 ";
@@ -127,6 +134,7 @@ impl Binding
 
         if self.glyphs.as_ref().map(|(version, _)| *version != font_version).unwrap_or(true)
         {
+            if font_data.len() > 1 { unimplemented!("Multiple glyph textures ({}).", font_data.len()); }
             let config = TextureConfig { size: TEXTURE_SIZE, channel: TextureChannel::A, mipmap: false, wrap: TextureWrap::Clamp };
             let texture = gl.new_texture(&config, &font_data[0]);
             self.glyphs = Some((font_version, texture));
@@ -143,7 +151,7 @@ impl Binding
                     None => (-1.0, -1.0),
                     Some((s, t, l)) =>
                     {
-                        if l > 0 { unimplemented!("Multiple glyph textures."); }
+                        if l > 0 { unreachable!(); }
                         (s, t)
                     }
                 };
@@ -167,7 +175,7 @@ impl Binding
         if let Some((_, glyphs)) = &self.glyphs
         {
             rp
-                .pipeline(&self.shader, PipelineInfo { depth_test: false, alpha_blend: true, face_cull: false })
+                .pipeline(&self.shader, PipelineInfo { depth_test: false, alpha_blend: true, face_cull: true })
                 .uniform_key(&self.tex_key, glyphs)
                 .draw(Primitives::Triangles, &self.vertices, Some(&self.indices), 0, self.count);
         }
