@@ -24,21 +24,43 @@ const VERT: &str =
 
 const FRAG: &str =
 "
-    #define MIN 0.46
-    #define MAX 0.54
+    //#extension GL_OES_standard_derivatives : require
+
+    //#define SIG 0.02
     
     varying vec2 out_coords;
     varying vec4 out_color;
 
     uniform sampler2D glyphs;
 
+    float contour(float d, float w)
+    {
+        return smoothstep(0.5 - w, 0.5 + w, d);
+    }
+
+    float samp(vec2 uv, float w)
+    {
+        return contour(texture2D(glyphs, uv).a, w);
+    }
+
     void main()
     {
         float alpha = 1.0;
         if(out_coords.s > -0.5)
         {
-            float sdf = texture2D(glyphs, out_coords).a;
-            alpha = (clamp(sdf, MIN, MAX) - MIN) / (MAX - MIN);
+            vec2 uv = out_coords;
+            float dist = texture2D(glyphs, uv).a;
+            float width = fwidth(dist);
+            alpha = contour(dist, width);
+            float dscale = 0.354; //half of 1/sqrt2
+            vec2 duv = dscale * (dFdx(uv) + dFdy(uv));
+            vec4 box = vec4(uv - duv, uv + duv);
+            float asum =
+                samp(box.xy, width)
+              + samp(box.zw, width)
+              + samp(box.xw, width)
+              + samp(box.zy, width);
+            alpha = (alpha + 0.5 * asum) / 3.0;
         }
         gl_FragColor = alpha * out_color;
     }
