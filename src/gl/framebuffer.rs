@@ -26,7 +26,7 @@ impl Gl
 			{
 				let renderbuffer = gl.create_renderbuffer().unwrap();
 				gl.bind_renderbuffer(glow::RENDERBUFFER, Some(renderbuffer));
-				gl.renderbuffer_storage(glow::RENDERBUFFER, glow::DEPTH_COMPONENT16, *size as i32, *size as i32);
+				gl.renderbuffer_storage(glow::RENDERBUFFER, glow::DEPTH_COMPONENT24, *size as i32, *size as i32);
 				gl.bind_renderbuffer(glow::RENDERBUFFER, None);
 				gl.framebuffer_renderbuffer(glow::FRAMEBUFFER, glow::DEPTH_ATTACHMENT, glow::RENDERBUFFER, Some(renderbuffer));
 				Some(renderbuffer)

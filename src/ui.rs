@@ -24,9 +24,7 @@ const VERT: &str =
 
 const FRAG: &str =
 "
-    //#extension GL_OES_standard_derivatives : require
-
-    //#define SIG 0.02
+    #extension GL_OES_standard_derivatives : require
     
     varying vec2 out_coords;
     varying vec4 out_color;

@@ -2,9 +2,9 @@ use winit::{dpi::PhysicalSize, event::{ElementState, Event as RawEvent, Keyboard
 
 pub const DEBUG: bool = cfg!(debug_assertions);
 
-#[cfg(not(any(target_arch = "wasm32", target_os = "android")))]
+#[cfg(not(target_arch = "wasm32"))]
 mod desktop;
-#[cfg(not(any(target_arch = "wasm32", target_os = "android")))]
+#[cfg(not(target_arch = "wasm32"))]
 pub use desktop::*;
 
 #[cfg(target_arch = "wasm32")]
@@ -219,6 +219,7 @@ impl Context
         self.storage.get(key)
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn get_storage_keys(&self) -> Vec<String>
     {
         self.storage.keys()
