@@ -24,8 +24,6 @@ const VERT: &str =
 
 const FRAG: &str =
 "
-    #extension GL_OES_standard_derivatives : require
-    
     varying vec2 out_coords;
     varying vec4 out_color;
 
@@ -98,7 +96,10 @@ impl Binding
 {
     pub fn new(gl: &mut Gl) -> Self
     {
+        #[cfg(not(target_arch = "wasm32"))]
         let shader = gl.new_shader(VERT, FRAG);
+        #[cfg(target_arch = "wasm32")]
+        let shader = gl.new_shader(VERT, &format!("    #extension GL_OES_standard_derivatives : require\n{FRAG}"));
         let tex_key = shader.get_key("glyphs");
         Self
         {
