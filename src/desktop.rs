@@ -1,5 +1,12 @@
 use super::*;
 use raw_gl_context::*;
+use std::path::PathBuf;
+
+pub fn data_path() -> PathBuf
+{
+    let name = if cfg!(debug_assertions) { "export/data" } else { "data" };
+    PathBuf::from(name)
+}
 
 pub fn log(msg: &str)
 {

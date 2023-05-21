@@ -148,7 +148,7 @@ trait ResourceSystemWrapper: std::ops::Deref + Sized {
     }
 
     fn add_file_event_wrapper(&mut self, file: File, gl: &mut Gl) {
-        Box::new(self.get_iter_mut())
+        self.get_iter_mut()
             .find(|rl| rl.needs_key(&file.key))
             .unwrap_or_else(|| panic!("Unknown key recived {:?} for File {:?}", file.key, file.path))
             .add_file(file, gl);
