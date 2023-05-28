@@ -42,7 +42,22 @@ impl StuffTrait for Stuff
             vsync: true,
             ..Default::default()
         };
-        let context = GlContext::create(&window, config).unwrap();
+        let context = GlContext::create(&window, config).unwrap_or_else(|_|
+        {
+	    let config = GlConfig
+            {
+                version: (2, 0),
+                profile: raw_gl_context::Profile::Compatibility,
+                depth_bits: 24,
+                stencil_bits: 0,
+                samples: None,
+                srgb: true,
+                double_buffer: true,
+                vsync: true,
+                ..Default::default()
+            };
+            GlContext::create(&window, config).unwrap()
+        });
         context.make_current();
         let gl = unsafe { glow::Context::from_loader_function(|symbol| context.get_proc_address(symbol) as *const _) };
         (window, Self { context }, gl, "#version 110", "#version 110")
