@@ -48,8 +48,8 @@ pub mod time
     pub fn duration_secs(first: Instant, second: Instant) -> f32 { ((second.0 - first.0) / 1e3) as f32 }
 }
 
-#[cfg(feature = "fs")]
-pub(crate) mod fs
+#[cfg(feature = "loading")]
+pub(crate) mod loading
 {
     use web_sys::{XmlHttpRequest, XmlHttpRequestResponseType};
     use js_sys::Uint8Array;
@@ -100,8 +100,12 @@ pub(crate) mod fs
             self.data.map(|data| data.map(|data| EventFile { path, key, data }))
         }
     }
+}
 
-    pub(crate) struct Storage
+#[cfg(feature = "storage")]
+pub(crate) mod storage
+{
+	pub(crate) struct Storage
     {
         pub(crate) storage: web_sys::Storage
     }

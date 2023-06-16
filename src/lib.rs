@@ -30,7 +30,7 @@ trait StuffTrait: Sized
     fn swap_buffers(&self);
 }
 
-#[cfg(feature = "fs")]
+#[cfg(feature = "loading")]
 trait FileTrait: Sized
 {
     fn load(name: &str, key: u64) -> Self;
@@ -38,7 +38,7 @@ trait FileTrait: Sized
     fn get(self) -> Option<Result<File, String>>;
 }
 
-#[cfg(feature = "fs")]
+#[cfg(feature = "storage")]
 trait StorageTrait: Sized
 {
     fn load() -> Self;
@@ -57,10 +57,10 @@ pub fn start<T: App>(init: T::Init)
         window,
         window_dims,
         gl,
-        #[cfg(feature = "fs")]
-        storage: fs::Storage::load(),
-        #[cfg(feature = "fs")]
+		#[cfg(feature = "loading")]
         files: Vec::new(),
+        #[cfg(feature = "storage")]
+        storage: storage::Storage::load(),
         #[cfg(feature = "rodio")]
         audio_device: None
     };
@@ -116,7 +116,7 @@ pub fn start<T: App>(init: T::Init)
             },
             RawEvent::MainEventsCleared =>
             {
-                #[cfg(feature = "fs")]
+                #[cfg(feature = "loading")]
                 for file in ctx.check_files().into_iter()
                 {
                     app.input(&mut ctx, Event::File(file));
@@ -145,10 +145,10 @@ pub struct Context
     window: Window,
     window_dims: (u32, u32),
     gl: gl::Gl,
-    #[cfg(feature = "fs")]
-    storage: fs::Storage,
-    #[cfg(feature = "fs")]
-    files: Vec<fs::File>,
+	#[cfg(feature = "loading")]
+    files: Vec<loading::File>,
+    #[cfg(feature = "storage")]
+    storage: storage::Storage,
     #[cfg(feature = "rodio")]
     audio_device: Option<(OutputStream, OutputStreamHandle)>
 }
@@ -206,28 +206,12 @@ impl Context
     }
 }
 
-#[cfg(feature = "fs")]
+#[cfg(feature = "loading")]
 impl Context
 {
-    pub fn set_storage(&mut self, key: &str, value: Option<&str>)
-    {
-        self.storage.set(key, value);
-    }
-
-    pub fn get_storage(&self, key: &str) -> Option<String>
-    {
-        self.storage.get(key)
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn get_storage_keys(&self) -> Vec<String>
-    {
-        self.storage.keys()
-    }
-
     pub fn load_file(&mut self, name: &str, key: u64)
     {
-        self.files.push(fs::File::load(name, key));
+        self.files.push(loading::File::load(name, key));
     }
 
     fn check_files(&mut self) -> Vec<Result<File, String>>
@@ -245,6 +229,26 @@ impl Context
             }
         }
         finished
+    }
+}
+
+#[cfg(feature = "storage")]
+impl Context
+{
+	pub fn set_storage(&mut self, key: &str, value: Option<&str>)
+    {
+        self.storage.set(key, value);
+    }
+
+    pub fn get_storage(&self, key: &str) -> Option<String>
+    {
+        self.storage.get(key)
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn get_storage_keys(&self) -> Vec<String>
+    {
+        self.storage.keys()
     }
 }
 

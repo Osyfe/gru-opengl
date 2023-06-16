@@ -21,6 +21,6 @@ pub enum Event
     Cursor { position: (f32, f32) },
     CursorGone,
     Scroll(Scroll),
-    #[cfg(feature = "fs")]
+    #[cfg(feature = "loading")]
     File(Result<File, String>)
 }

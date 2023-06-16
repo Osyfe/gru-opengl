@@ -77,12 +77,11 @@ pub mod time
     pub fn duration_secs(first: Instant, second: Instant) -> f32 { (second.0 - first.0).as_secs_f32() }
 }
 
-#[cfg(feature = "fs")]
-pub(crate) mod fs
+#[cfg(feature = "loading")]
+pub(crate) mod loading
 {
-    use std::io::{BufReader, BufWriter, prelude::*};
+    use std::io::{BufReader, prelude::*};
     use std::sync::mpsc::{channel, Receiver, TryRecvError};
-    use ahash::AHashMap;
     use crate::event::File as EventFile;
 
     pub(crate) struct File
@@ -140,8 +139,15 @@ pub(crate) mod fs
             self.data
         }
     }
+}
 
-    pub(crate) struct Storage
+#[cfg(feature = "storage")]
+pub(crate) mod storage
+{
+	use std::io::{BufReader, BufWriter, prelude::*};
+	use ahash::AHashMap;
+	
+	pub(crate) struct Storage
     {
         map: AHashMap<String, String>
     }

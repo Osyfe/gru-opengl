@@ -6,8 +6,9 @@ edition = "2021"
 publish = false
 
 [features]
-fs = []
-resource = ["fs", "gltf", "image", "rodio"]
+loading = []
+storage = []
+resource = ["loading", "gltf", "image", "rodio"]
 ui = ["gru-misc/ui"]
 
 [dependencies]

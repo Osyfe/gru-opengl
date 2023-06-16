@@ -128,7 +128,7 @@ impl Binding
             },
             GlEvent::CursorGone => Some(UiEvent::PointerGone),
             GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(UiEvent::Scroll { dx: *dx, dy: *dy }),
-            #[cfg(feature = "fs")]
+            #[cfg(feature = "loading")]
             GlEvent::File(_) => None
         };
         match event
