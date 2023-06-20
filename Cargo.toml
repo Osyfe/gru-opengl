@@ -12,7 +12,7 @@ resource = ["loading", "gltf", "image", "rodio"]
 ui = ["gru-misc/ui"]
 
 [dependencies]
-winit = "0.28.6"
+winit = "0.26.0"
 glow = "0.12.2"
 gru-misc = { path = "../gru-misc", features = ["math"] }
 ahash = {version = "0.8.3", features = ["serde"] }
