@@ -10,11 +10,13 @@ loading = []
 storage = []
 resource = ["loading", "gltf", "image", "rodio"]
 ui = ["gru-misc/ui"]
+ui2 = ["gru-ui"]
 
 [dependencies]
 winit = "0.26.0"
 glow = "0.12.2"
 gru-misc = { path = "../gru-misc", features = ["math"] }
+gru-ui = { path = "../gru-ui", optional = true }
 ahash = {version = "0.8.3", features = ["serde"] }
 gltf = { version = "1.2.0", default-features = false, features = ["names"], optional = true }
 image = { version = "0.24.6", default-features = false, features = ["png"], optional = true }

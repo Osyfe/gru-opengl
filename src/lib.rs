@@ -20,6 +20,8 @@ pub mod gl;
 pub mod resource;
 #[cfg(feature = "ui")]
 pub mod ui;
+#[cfg(feature = "ui2")]
+pub mod ui2;
 
 #[cfg(feature = "rodio")]
 use rodio::{OutputStream, OutputStreamHandle};
