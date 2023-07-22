@@ -203,7 +203,7 @@ impl Binding
     }
 }
 
-fn convert_key(key: GlKey) -> Option<UiKey>
+pub fn convert_key(key: GlKey) -> Option<UiKey>
 {
     match key
     {
@@ -314,7 +314,7 @@ fn convert_key(key: GlKey) -> Option<UiKey>
     }
 }
 
-fn convert_button(button: GlButton) -> UiButton
+pub fn convert_button(button: GlButton) -> UiButton
 {
     match button
     {
