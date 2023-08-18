@@ -154,7 +154,7 @@ pub(crate) mod storage
 
     impl Storage
     {
-        const PATH: &'static str = if super::DEBUG { "export/data/STORAGE.gru" } else { "data/STORAGE.gru" };
+        const PATH: &'static str = if super::DEBUG { "export/data/CACHE.gru" } else { "data/CACHE.gru" };
 
         pub fn keys(&self) -> Vec<String> 
         {
