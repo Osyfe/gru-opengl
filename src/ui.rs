@@ -123,8 +123,10 @@ impl Binding
             GlEvent::Click { button, pressed } => Some(UiEvent::PointerClicked { pos: self.pos, button: convert_button(*button), pressed: *pressed }),
             GlEvent::Cursor { position } =>
             {
-                self.pos = Vec2(position.0, size.1 - position.1);
-                Some(UiEvent::PointerMoved { pos: self.pos, delta: Vec2(0.0, 0.0) })
+				let new_pos = Vec2(position.0, size.1 - position.1);
+				let delta = new_pos - self.pos;
+                self.pos = new_pos;
+                Some(UiEvent::PointerMoved { pos: self.pos, delta })
             },
             GlEvent::CursorGone => Some(UiEvent::PointerGone),
             GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(UiEvent::Scroll { pos: self.pos, dx: *dx, dy: *dy }),
