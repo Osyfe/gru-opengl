@@ -188,7 +188,6 @@ impl Context
         self.window_dims
     }
 
-    #[inline]
     pub fn set_window_dims(&mut self, (width, height): (u32, u32))
     {
         self.window.set_inner_size(PhysicalSize { width, height });
@@ -200,11 +199,23 @@ impl Context
         self.window.fullscreen().is_some()
     }
 
-    #[inline]
     pub fn set_fullscreen(&mut self, open: bool)
     {
         let fullscreen = if open { Some(Fullscreen::Borderless(None)) } else { None };
         self.window.set_fullscreen(fullscreen);
+    }
+
+    pub fn mouse_cam_mode(&mut self, enable: bool)
+    {
+        if enable
+        {
+            self.window.set_cursor_visible(false);
+            self.window.set_cursor_grab(true).unwrap();
+        } else
+        {
+            self.window.set_cursor_grab(false).unwrap();
+            self.window.set_cursor_visible(true);
+        }
     }
 }
 

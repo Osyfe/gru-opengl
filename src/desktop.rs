@@ -44,7 +44,7 @@ impl StuffTrait for Stuff
         };
         let context = GlContext::create(&window, config).unwrap_or_else(|_|
         {
-	    let config = GlConfig
+	        let config = GlConfig
             {
                 version: (2, 0),
                 profile: raw_gl_context::Profile::Compatibility,

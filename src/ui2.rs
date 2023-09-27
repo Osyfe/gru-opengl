@@ -127,7 +127,7 @@ impl Binding
                 Some(UiEvent::PointerMoved { pos: self.pos, delta: Vec2(0.0, 0.0) })
             },
             GlEvent::CursorGone => Some(UiEvent::PointerGone),
-            GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(UiEvent::Scroll { dx: *dx, dy: *dy }),
+            GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(UiEvent::Scroll { pos: self.pos, delta: Vec2(*dx, *dy) }),
             #[cfg(feature = "loading")]
             GlEvent::File(_) => None
         };
