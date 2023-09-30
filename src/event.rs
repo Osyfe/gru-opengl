@@ -15,6 +15,7 @@ pub struct File
 
 pub enum Event
 {
+    RawMouse { delta: (f32, f32) },
     Key { key: KeyCode, pressed: bool },
     Char(char),
     Click { button: MouseButton, pressed: bool },

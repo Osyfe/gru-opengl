@@ -1,4 +1,4 @@
-use winit::{dpi::PhysicalSize, event::{ElementState, Event as RawEvent, KeyboardInput, MouseScrollDelta, WindowEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder, Fullscreen, Icon}};
+use winit::{dpi::PhysicalSize, event::{ElementState, Event as RawEvent, KeyboardInput, MouseScrollDelta, WindowEvent, DeviceEvent}, event_loop::{ControlFlow, EventLoop}, window::{Window, WindowBuilder, Fullscreen, Icon}};
 
 pub const DEBUG: bool = cfg!(debug_assertions);
 
@@ -73,10 +73,14 @@ pub fn start<T: App>(init: T::Init)
     {
         match event
         {
+            RawEvent::DeviceEvent { event: DeviceEvent::MouseMotion { delta }, .. } =>
+            {
+                app.input(&mut ctx, Event::RawMouse { delta: (delta.0 as f32, delta.1 as f32) });
+            },
             RawEvent::WindowEvent { event: WindowEvent::Resized(PhysicalSize { width, height }), .. } =>
             {
                 ctx.window_dims = (width, height)
-            }
+            },
             RawEvent::WindowEvent { event: WindowEvent::CloseRequested, .. } =>
             {
                 *control_flow = ControlFlow::Exit

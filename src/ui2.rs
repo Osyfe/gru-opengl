@@ -118,6 +118,7 @@ impl Binding
     {
         let event = match event
         {
+            GlEvent::RawMouse { .. } => None,
             GlEvent::Key { key, pressed } => convert_key(*key).map(|key| UiEvent::Key { key, pressed: *pressed }),
             GlEvent::Char(ch) => Some(UiEvent::Char(*ch)),
             GlEvent::Click { button, pressed } => Some(UiEvent::PointerClicked { pos: self.pos, button: convert_button(*button), pressed: *pressed }),
