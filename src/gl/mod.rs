@@ -42,7 +42,7 @@ impl Gl
 			gl.depth_func(glow::LEQUAL);
 			gl.disable(glow::BLEND);
 			gl.blend_equation(glow::FUNC_ADD);
-			gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA); //SRC_ALPHA produces garbage on web...
+			gl.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
 			gl.enable(glow::CULL_FACE);
 			gl.cull_face(glow::BACK);
 

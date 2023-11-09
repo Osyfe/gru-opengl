@@ -77,10 +77,12 @@ pub fn start<T: App>(init: T::Init)
             {
                 app.input(&mut ctx, Event::RawMouse { delta: (delta.0 as f32, delta.1 as f32) });
             },
+			/*
             RawEvent::WindowEvent { event: WindowEvent::Resized(PhysicalSize { width, height }), .. } =>
             {
                 ctx.window_dims = (width, height)
             },
+			*/
             RawEvent::WindowEvent { event: WindowEvent::CloseRequested, .. } =>
             {
                 *control_flow = ControlFlow::Exit
@@ -132,6 +134,7 @@ pub fn start<T: App>(init: T::Init)
                 let dt = time::duration_secs(then, now);
                 then = now;
 
+				ctx.window_dims = ctx.window.inner_size().into();
                 ctx.gl.window_dims = ctx.window_dims;
                 if !app.frame(&mut ctx, dt) { *control_flow = ControlFlow::Exit; }
 
