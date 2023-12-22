@@ -9,8 +9,8 @@ publish = false
 loading = []
 storage = []
 resource = ["loading", "gltf", "image", "rodio"]
-ui = ["gru-misc/ui"]
-ui2 = ["gru-ui"]
+ui_legacy = ["gru-misc/ui"]
+ui = ["gru-ui"]
 
 [dependencies]
 winit = "0.26.0"

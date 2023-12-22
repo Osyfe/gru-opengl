@@ -1,8 +1,8 @@
-use gru_misc::ui::*;
+use gru_ui::*;
 
 use crate::event::{Event as GlEvent, MouseButton as GlButton, KeyCode as GlKey, Scroll as GlScroll};
-use event::{Event as UiEvent, MouseButton as UiButton, Key as UiKey};
-use gru_misc::paint::{Vec2, Frame as PaintFrame, TEXTURE_SIZE};
+use event::{HardwareEvent, MouseButton as UiButton, Key as UiKey};
+use gru_ui::{math::Vec2, paint::{Frame as PaintFrame, TEXTURE_SIZE}};
 use crate::gl::*;
 
 const VERT: &str =
@@ -83,7 +83,7 @@ impl AttributesReprCpacked for Vertex
 pub struct Binding
 {
     pos: Vec2,
-    events: Vec<UiEvent>,
+    events: Vec<HardwareEvent>,
     shader: Shader<Vertex>,
     tex_key: UniformKey<Texture<false>>,
     glyphs: Option<(u64, Texture<false>)>,
@@ -119,18 +119,16 @@ impl Binding
         let event = match event
         {
             GlEvent::RawMouse { .. } => None,
-            GlEvent::Key { key, pressed } => convert_key(*key).map(|key| UiEvent::Key { key, pressed: *pressed }),
-            GlEvent::Char(ch) => Some(UiEvent::Char(*ch)),
-            GlEvent::Click { button, pressed } => Some(UiEvent::PointerClicked { pos: self.pos, button: convert_button(*button), pressed: *pressed }),
+            GlEvent::Key { key, pressed } => convert_key(*key).map(|key| HardwareEvent::Key { key, pressed: *pressed }),
+            GlEvent::Char(ch) => Some(HardwareEvent::Char(*ch)),
+            GlEvent::Click { button, pressed } => Some(HardwareEvent::PointerClicked { pos: self.pos, button: convert_button(*button), pressed: *pressed }),
             GlEvent::Cursor { position } =>
             {
-				let new_pos = Vec2(position.0, size.1 - position.1);
-				let delta = new_pos - self.pos;
-                self.pos = new_pos;
-                Some(UiEvent::PointerMoved { pos: self.pos, delta })
+                self.pos = Vec2(position.0, size.1 - position.1);
+                Some(HardwareEvent::PointerMoved { pos: self.pos, delta: Vec2(0.0, 0.0) })
             },
-            GlEvent::CursorGone => Some(UiEvent::PointerGone),
-            GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(UiEvent::Scroll { pos: self.pos, dx: *dx, dy: *dy }),
+            GlEvent::CursorGone => Some(HardwareEvent::PointerGone),
+            GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(HardwareEvent::Scroll { pos: self.pos, delta: Vec2(*dx, *dy) }),
             #[cfg(feature = "loading")]
             GlEvent::File(_) => None
         };
@@ -145,7 +143,7 @@ impl Binding
         }
     }
 
-    pub fn events(&self) -> &[UiEvent]
+    pub fn events(&self) -> &[HardwareEvent]
     {
         &self.events
     }
@@ -206,7 +204,7 @@ impl Binding
     }
 }
 
-pub fn convert_key(key: GlKey) -> Option<UiKey>
+fn convert_key(key: GlKey) -> Option<UiKey>
 {
     match key
     {
@@ -317,7 +315,7 @@ pub fn convert_key(key: GlKey) -> Option<UiKey>
     }
 }
 
-pub fn convert_button(button: GlButton) -> UiButton
+fn convert_button(button: GlButton) -> UiButton
 {
     match button
     {

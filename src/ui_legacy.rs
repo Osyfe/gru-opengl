@@ -1,8 +1,8 @@
-use gru_ui::*;
+use gru_misc::ui::*;
 
 use crate::event::{Event as GlEvent, MouseButton as GlButton, KeyCode as GlKey, Scroll as GlScroll};
 use event::{Event as UiEvent, MouseButton as UiButton, Key as UiKey};
-use gru_ui::{math::Vec2, paint::{Frame as PaintFrame, TEXTURE_SIZE}};
+use gru_misc::paint::{Vec2, Frame as PaintFrame, TEXTURE_SIZE};
 use crate::gl::*;
 
 const VERT: &str =
@@ -124,11 +124,13 @@ impl Binding
             GlEvent::Click { button, pressed } => Some(UiEvent::PointerClicked { pos: self.pos, button: convert_button(*button), pressed: *pressed }),
             GlEvent::Cursor { position } =>
             {
-                self.pos = Vec2(position.0, size.1 - position.1);
-                Some(UiEvent::PointerMoved { pos: self.pos, delta: Vec2(0.0, 0.0) })
+				let new_pos = Vec2(position.0, size.1 - position.1);
+				let delta = new_pos - self.pos;
+                self.pos = new_pos;
+                Some(UiEvent::PointerMoved { pos: self.pos, delta })
             },
             GlEvent::CursorGone => Some(UiEvent::PointerGone),
-            GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(UiEvent::Scroll { pos: self.pos, delta: Vec2(*dx, *dy) }),
+            GlEvent::Scroll(GlScroll::Wheel(dx, dy) | GlScroll::Touch(dx, dy)) => Some(UiEvent::Scroll { pos: self.pos, dx: *dx, dy: *dy }),
             #[cfg(feature = "loading")]
             GlEvent::File(_) => None
         };
@@ -204,7 +206,7 @@ impl Binding
     }
 }
 
-fn convert_key(key: GlKey) -> Option<UiKey>
+pub fn convert_key(key: GlKey) -> Option<UiKey>
 {
     match key
     {
@@ -315,7 +317,7 @@ fn convert_key(key: GlKey) -> Option<UiKey>
     }
 }
 
-fn convert_button(button: GlButton) -> UiButton
+pub fn convert_button(button: GlButton) -> UiButton
 {
     match button
     {

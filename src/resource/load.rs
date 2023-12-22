@@ -197,7 +197,7 @@ impl<V: BuildFromGltf> Load for Model<V> {
             } {
                 let accessor = attribute.1;
                 if accessor.data_type() != accessor::DataType::F32 {
-                    panic!("ModelData::new: Model \"{model_name}\" contains not F32 data.");
+                    panic!("ModelData::new: Model \"{model_name}\" contains not F32 data for {:?} (instead {:?}).", attribute.0, accessor.data_type());
                 }
                 let view = accessor.view().unwrap();
                 let data = &(if let buffer::Source::Uri(name) = view.buffer().source() {
@@ -220,20 +220,20 @@ impl<V: BuildFromGltf> Load for Model<V> {
         let mut normal_iter = normals.chunks_exact(3);
         let mut tangent_iter = tangents.chunks_exact(4);
         let mut tex_coord_iter = tex_coords.chunks_exact(2);
-        let mut color_iter = colors.chunks_exact(3);
+        let mut color_iter = colors.chunks_exact(4);
 
         let mut vertices = Vec::new();
         for _ in 0..((positions.len() / 3)
             .max(normals.len() / 3)
             .max(tangents.len() / 4)
             .max(tex_coords.len() / 2)
-            .max(colors.len() / 3))
+            .max(colors.len() / 4))
         {
             let pos = position_iter.next().unwrap_or(&[0.0; 3]);
             let n = normal_iter.next().unwrap_or(&[0.0; 3]);
             let t = tangent_iter.next().unwrap_or(&[0.0; 4]);
             let tc = tex_coord_iter.next().unwrap_or(&[0.0; 2]);
-            let c = color_iter.next().unwrap_or(&[0.0; 3]);
+            let c = color_iter.next().unwrap_or(&[0.0; 4]);
 
             vertices.push(V::build(VertexData {
                 position: [pos[0], pos[1], pos[2]],
