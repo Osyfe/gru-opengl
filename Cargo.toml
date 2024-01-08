@@ -2,8 +2,8 @@
 name = "gru-opengl"
 version = "0.1.0"
 authors = ["Jannik Fehre", "Fabian Osyguß"]
+license = "MIT OR Apache-2.0"
 edition = "2021"
-publish = false
 
 [features]
 loading = []
@@ -30,6 +30,6 @@ rodio = { version = "0.17.1", default-features = false, features = ["vorbis"], o
 # web
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 js-sys = "0.3.64"
-wasm-bindgen = "0.2.87"
+wasm-bindgen = "0.2.89"
 web-sys = { version = "0.3.64", features = ["Window", "Document", "Element", "HtmlCanvasElement", "WebGlRenderingContext", "WebGlBuffer", "WebGlShader", "WebGlProgram", "Performance", "XmlHttpRequest", "XmlHttpRequestResponseType", "Storage"] }
 rodio = { version = "0.17.1", default-features = false, features = ["vorbis", "wasm-bindgen"], optional = true }
