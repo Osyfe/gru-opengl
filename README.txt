@@ -1,4 +1,4 @@
-This is a small Rust framework for building games that run both on desktop and the web with the same code. It integrates windowing + inputs (via "winit"), graphics (via "glow" which maps to OpenGL 2.0 or WebGL 1, respectively), audio (via "rodio"), resource loading and ui (both self written). It aims to be easy to set up while being cross-platform and to run on older devices as well (therefore the old OpenGL versions).
+A small Rust framework for building games that run both on desktop and the web with the same code. It integrates windowing + inputs (via "winit"), graphics (via "glow" which maps to OpenGL 2.0 or WebGL 1, respectively), audio (via "rodio"), resource loading and ui (both self written). It aims to be easy to set up while being cross-platform and to run on older devices as well (therefore the old OpenGL versions).
 
 For compiling and testing web build you need to install:
 
