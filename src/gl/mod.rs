@@ -98,7 +98,7 @@ pub struct IndexBuffer
 	buffer: <Context as HasContext>::Buffer,
 	length: u32
 }
-
+//P: texture locks uniform location during the entire pipeline (8 in total!)
 pub struct Texture<const P: bool>
 {
 	gl: Rc<Context>,
