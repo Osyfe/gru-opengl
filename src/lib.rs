@@ -192,6 +192,12 @@ impl Context
         self.window_dims
     }
 
+    #[inline]
+    pub fn display_scale_factor(&self) -> f32
+    {
+        self.window.scale_factor() as f32
+    }
+
     pub fn set_window_dims(&mut self, (width, height): (u32, u32))
     {
         self.window.set_inner_size(PhysicalSize { width, height });
