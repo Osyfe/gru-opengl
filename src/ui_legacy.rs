@@ -159,7 +159,7 @@ impl Binding
         if self.glyphs.as_ref().map(|(version, _)| *version != font_version).unwrap_or(true)
         {
             if font_data.len() > 1 { unimplemented!("Multiple glyph textures ({}).", font_data.len()); }
-            let config = TextureConfig { size: TEXTURE_SIZE, channel: TextureChannel::A, mipmap: false, wrap: TextureWrap::Clamp };
+            let config = TextureConfig { size: TEXTURE_SIZE, channel: TextureChannel::A, mipmap: false, wrap_s: TextureWrap::Clamp, wrap_t: TextureWrap::Clamp };
             let texture = gl.new_texture(&config, &font_data[0]);
             self.glyphs = Some((font_version, texture));
         }

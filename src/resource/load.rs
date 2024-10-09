@@ -39,7 +39,8 @@ impl<T: AttributesReprCpacked> Load for Shader<T> {
 pub struct TextureLoadConfig {
     pub channel: crate::gl::TextureChannel,
     pub mipmap: bool,
-    pub wrap: crate::gl::TextureWrap,
+    pub wrap_s: crate::gl::TextureWrap,
+    pub wrap_t: crate::gl::TextureWrap,
 }
 
 impl TextureLoadConfig {
@@ -48,7 +49,8 @@ impl TextureLoadConfig {
             size,
             channel: self.channel,
             mipmap: self.mipmap,
-            wrap: self.wrap,
+            wrap_s: self.wrap_s,
+            wrap_t: self.wrap_t,
         }
     }
 }

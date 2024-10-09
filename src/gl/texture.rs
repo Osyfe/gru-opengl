@@ -2,7 +2,7 @@ use super::*;
 
 impl Gl
 {
-	pub fn new_texture<const P: bool>(&mut self, TextureConfig { size, channel, mipmap, wrap }: &TextureConfig, data: &[u8]) -> Texture<P>
+	pub fn new_texture<const P: bool>(&mut self, TextureConfig { size, channel, mipmap, wrap_s, wrap_t }: &TextureConfig, data: &[u8]) -> Texture<P>
 	{
 		if size & (size - 1) != 0 { panic!("Gl::new_texture: Size is not a power of 2."); }
 		if size.pow(2) * channel.bytes() != data.len() as u32 { panic!("Gl::new_texture: Data has the wrong length."); }
@@ -12,8 +12,8 @@ impl Gl
 			let texture = gl.create_texture().unwrap();
 			gl.bind_texture(glow::TEXTURE_2D, Some(texture));
 			gl.tex_image_2d(glow::TEXTURE_2D, 0, channel.format() as i32, *size as i32, *size as i32, 0, channel.format(), glow::UNSIGNED_BYTE, Some(data));
-			gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, wrap.wrap() as i32);
-			gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, wrap.wrap() as i32);
+			gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, wrap_s.wrap() as i32);
+			gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, wrap_t.wrap() as i32);
 			if *mipmap
 			{
 				gl.generate_mipmap(glow::TEXTURE_2D);
@@ -82,7 +82,8 @@ pub struct TextureConfig
 	pub size: u32,
 	pub channel: TextureChannel,
 	pub mipmap: bool,
-	pub wrap: TextureWrap
+	pub wrap_s: TextureWrap,
+    pub wrap_t: TextureWrap
 }
 
 impl<const P: bool> Texture<P>
