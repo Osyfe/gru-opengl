@@ -18,8 +18,6 @@ pub mod gl;
 
 #[cfg(feature = "resource")]
 pub mod resource;
-#[cfg(feature = "ui_legacy")]
-pub mod ui_legacy;
 #[cfg(feature = "ui")]
 pub mod ui;
 

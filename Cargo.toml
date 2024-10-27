@@ -9,7 +9,6 @@ edition = "2021"
 loading = []
 storage = []
 resource = ["loading", "gltf", "image", "rodio"]
-ui_legacy = ["gru-misc/ui"]
 ui = ["gru-ui"]
 
 [dependencies]
