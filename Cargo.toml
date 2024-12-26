@@ -16,7 +16,7 @@ winit = "0.26.0"
 glow = "0.12.2"
 gru-misc = { path = "../gru-misc", features = ["math"] }
 gru-ui = { path = "../gru-ui", optional = true }
-ahash = {version = "0.8.11", features = ["serde"] }
+ahash = { version = "0.8.11", default-features = false, features = ["no-rng", "std", "serde"] }
 gltf = { version = "1.2.0", default-features = false, features = ["names"], optional = true }
 image = { version = "0.24.6", default-features = false, features = ["png"], optional = true }
 
