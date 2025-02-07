@@ -19,13 +19,13 @@ fn next_resource_id() -> u64 {
 
 pub type ResLMut<'a> = &'a mut dyn ResLoad;
 pub type ResIterMut<'a, 'b> = Box<dyn Iterator<Item = ResLMut<'b>> + 'a>;
-pub fn get_res_iter_mut<'a, 'b, const N: usize>(arr: [ResLMut<'b>; N]) -> ResIterMut {
+pub fn get_res_iter_mut<'a, 'b: 'a, const N: usize>(arr: [ResLMut<'b>; N]) -> ResIterMut<'a, 'b> {
     Box::new(arr.into_iter())
 }
 
 pub type ResL<'a> = &'a dyn ResLoad;
 pub type ResIter<'a, 'b> = Box<dyn Iterator<Item = ResL<'b>> + 'a>;
-pub fn get_res_iter<'a, 'b, const N: usize>(arr: [ResL<'b>; N]) -> ResIter {
+pub fn get_res_iter<'a, 'b: 'a, const N: usize>(arr: [ResL<'b>; N]) -> ResIter<'a, 'b> {
     Box::new(arr.into_iter())
 }
 
@@ -81,9 +81,11 @@ impl<T: ResourceSystem> ResSys<T> {
 }
 
 impl<T: ResourceSystem> ResourceSystemWrapper for ResSys<T> {
+    /*
     fn load_id(&mut self) -> &mut Id<u64> {
         &mut self.load_id
     }
+    */
 
     fn loaded_counter(&mut self) -> &mut Id<u64> {
         &mut self.loaded_counter
@@ -127,7 +129,7 @@ impl<T: ResourceSystem> std::ops::DerefMut for ResSys<T> {
 }
 
 trait ResourceSystemWrapper: std::ops::Deref + Sized {
-    fn load_id(&mut self) -> &mut Id<u64>;
+    //fn load_id(&mut self) -> &mut Id<u64>;
     fn loaded_counter(&mut self) -> &mut Id<u64>;
 
     fn empty(id: u64) -> Self;
