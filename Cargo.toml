@@ -18,17 +18,17 @@ gru-misc = { path = "../gru-misc", features = ["math"] }
 gru-ui = { path = "../gru-ui", optional = true }
 ahash = { version = "0.8.11", default-features = false, features = ["no-rng", "std", "serde"] }
 gltf = { version = "1.2.0", default-features = false, features = ["names"], optional = true }
-image = { version = "0.24.6", default-features = false, features = ["png"], optional = true }
+image = { version = "0.25.5", default-features = false, features = ["png"], optional = true }
 
 # desktop
 [target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
 raw-gl-context = "0.1.2"
 bincode = "1.3.3"
-rodio = { version = "0.17.1", default-features = false, features = ["vorbis"], optional = true }
+rodio = { version = "0.20.1", default-features = false, features = ["vorbis"], optional = true }
 
 # web
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 js-sys = "0.3.64"
 wasm-bindgen = "0.2.95"
 web-sys = { version = "0.3.64", features = ["Window", "Document", "Element", "HtmlCanvasElement", "WebGlRenderingContext", "WebGlBuffer", "WebGlShader", "WebGlProgram", "Performance", "XmlHttpRequest", "XmlHttpRequestResponseType", "Storage"] }
-rodio = { version = "0.17.1", default-features = false, features = ["vorbis", "wasm-bindgen"], optional = true }
+rodio = { version = "0.20.1", default-features = false, features = ["vorbis", "wasm-bindgen"], optional = true }
