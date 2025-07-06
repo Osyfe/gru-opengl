@@ -49,13 +49,13 @@ trait StorageTrait: Sized
 pub fn start<T: App>(init: T::Init)
 {
     #[cfg(target_os = "linux")]
-    let event_loop =
+    let event_loop: EventLoop<()> =
     {
         use winit::platform::unix::EventLoopExtUnix;
-        EventLoop::new_x11()
+        EventLoop::new_x11().unwrap()
     };
     #[cfg(not(target_os = "linux"))]
-    let event_loop = EventLoop::new();
+    let event_loop: EventLoop<()> = EventLoop::new();
     let (window, stuff, gl, glsl_vertex_header, glsl_fragment_header) = Stuff::new(&event_loop);
     let gl = gl::Gl::new(gl, glsl_vertex_header, glsl_fragment_header);
     let window_dims = window.inner_size().into();
