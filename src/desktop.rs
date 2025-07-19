@@ -29,7 +29,7 @@ impl StuffTrait for Stuff
             use winit::platform::windows::WindowBuilderExtWindows;
             builder = builder.with_drag_and_drop(false); //conflicts with cpal
         }
-        let window = builder.build(&event_loop).unwrap();
+        let window = builder.with_visible(false).build(&event_loop).unwrap();
         let config = GlConfig
         {
             version: (2, 0),

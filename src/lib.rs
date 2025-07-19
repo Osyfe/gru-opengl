@@ -72,6 +72,7 @@ pub fn start<T: App>(init: T::Init)
         audio_device: None
     };
     let mut app = T::init(&mut ctx, init);
+    ctx.window.set_visible(true);
     let mut then = time::now();
 
     event_loop.run(move |event, _, control_flow|
